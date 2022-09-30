@@ -85,7 +85,7 @@ public class OTGPlugin
 	@OnlyIn(Dist.DEDICATED_SERVER)
 	public static void registerWorldType(RegistryEvent.Register<ForgeWorldPreset> event)
 	{
-		ForgeRegistries.WORLD_TYPES.register(new OTGWorldType());
+		ForgeRegistries.WORLD_TYPES.get().register(new OTGWorldType());
 	}
 	
 	@SubscribeEvent

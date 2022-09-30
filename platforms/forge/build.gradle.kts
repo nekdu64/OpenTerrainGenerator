@@ -3,8 +3,8 @@ plugins {
     id("dev.architectury.loom") version "0.10.0-SNAPSHOT"
 }
 
-val mcVersion = "1.18"
-val forgeVersion = "38.0.16"
+val mcVersion = "1.18.2"
+val forgeVersion = "40.1.80"
 
 loom {
     silentMojangMappingsLicense()
@@ -43,7 +43,7 @@ dependencies {
 
     otg(project(":common:common-core"))
 
-    val worldeditVersion = "7.2.8-SNAPSHOT"
+    val worldeditVersion = "7.2.10-SNAPSHOT"
     compileOnly("com.sk89q.worldedit:worldedit-core:$worldeditVersion") {
         exclude("org.yaml")
     }

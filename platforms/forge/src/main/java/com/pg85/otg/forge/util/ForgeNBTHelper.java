@@ -25,8 +25,8 @@ public class ForgeNBTHelper extends LocalNBTHelper
 		{
 			return null;
 		}
-		CompoundTag nbt = new CompoundTag();
-		tileEntity.save(nbt);
+		// TODO: only needs saving without metadata?
+		CompoundTag nbt = tileEntity.saveWithFullMetadata();
 		// Double up, just to be safe. It should be x, y, z.
 		//nmsTag.remove("pos");
 		nbt.remove("x");
