@@ -80,7 +80,7 @@ public class ModpackCreateWorldScreen extends CreateWorldScreen
 
 	public static ModpackCreateWorldScreen create(@Nullable Screen screen)
 	{
-		RegistryAccess.RegistryHolder dynamicregistry = RegistryAccess.builtin();
+		RegistryAccess.Writable dynamicregistry = RegistryAccess.builtinCopy();
 		WorldGenSettings dimGenSettings = net.minecraftforge.client.ForgeHooksClient.getDefaultWorldPreset().map(
 			type -> type.create(
 					dynamicregistry, 
@@ -96,7 +96,7 @@ public class ModpackCreateWorldScreen extends CreateWorldScreen
 			screen,
 			DataPackConfig.DEFAULT, 
 			new WorldGenSettingsComponent(
-				dynamicregistry, 
+				dynamicregistry.freeze(),
 				dimGenSettings, 
 				net.minecraftforge.client.ForgeHooksClient.getDefaultWorldPreset(), 
 				OptionalLong.empty()

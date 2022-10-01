@@ -18,6 +18,8 @@ import com.pg85.otg.util.logging.LogLevel;
 
 import com.pg85.otg.util.minecraft.EntityCategory;
 import com.pg85.otg.util.minecraft.LegacyRegistry;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.Music;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.EntityType;
@@ -99,14 +101,14 @@ public class ForgeBiome implements IBiome
 				RegistryResource registryResource = (RegistryResource)res;
 				Decoration stage = GenerationStep.Decoration.valueOf(registryResource.getDecorationStage());
 				// This changed from CONFIGURED_FEATURES to PLACED_FEATURE, also registry names changed, so presets will need to be updated.
-				PlacedFeature registry = BuiltinRegistries.PLACED_FEATURE.get(new ResourceLocation(registryResource.getFeatureKey()));
+				Holder<PlacedFeature> registry = BuiltinRegistries.PLACED_FEATURE.getHolder(ResourceKey.create(Registry.PLACED_FEATURE_REGISTRY, new ResourceLocation(registryResource.getFeatureKey()))).get();
 				if(registry != null)
 				{
 					biomeGenerationSettingsBuilder.addFeature(stage, registry);
 				} else {
 					String newResourceLocation = LegacyRegistry.convertLegacyResourceLocation(registryResource.getFeatureKey());
 					if (newResourceLocation != null) {
-						registry = BuiltinRegistries.PLACED_FEATURE.get(new ResourceLocation(newResourceLocation));
+						registry = BuiltinRegistries.PLACED_FEATURE.getHolder(ResourceKey.create(Registry.PLACED_FEATURE_REGISTRY, new ResourceLocation(newResourceLocation))).get();
 						if (registry == null) {
 							OTG.getEngine().getLogger().log(LogLevel.WARN, LogCategory.BIOME_REGISTRY, "Somehow you broke the universe! Feature: " + newResourceLocation + " is not in the registry");
 						} else {

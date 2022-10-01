@@ -29,7 +29,7 @@ public class OTGCustomiseOverworldScreen extends CreateWorldScreen
 		return new OTGCustomiseOverworldScreen(
 			parent,
 			new OTGWorldOptionsScreen(
-				parent.parent.worldGenSettingsComponent.registryHolder(),
+				parent.parent.worldGenSettingsComponent.registryHolder().freeze(),
 				net.minecraftforge.client.ForgeHooksClient.getDefaultWorldPreset().map(
 					type -> type.create(
 						parent.parent.worldGenSettingsComponent.registryHolder(), 

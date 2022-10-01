@@ -3,6 +3,7 @@ package com.pg85.otg.forge.materials;
 import com.pg85.otg.constants.Constants;
 import com.pg85.otg.util.materials.LocalMaterialTag;
 
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.Tag;
@@ -16,7 +17,7 @@ public class ForgeMaterialTag extends LocalMaterialTag
 		// If otg: or no domain was supplied, try OTG tags.
 
 		// TODO: This might not be updated correctly, needs another look --auth
-		Tag<Block> optTag;
+		TagKey<Block> optTag;
 		if(!name.contains(":") || name.startsWith(Constants.MOD_ID_SHORT + ":"))
 		{
 			final ResourceLocation otgResourceLocation;
@@ -46,15 +47,15 @@ public class ForgeMaterialTag extends LocalMaterialTag
 	}
 
 	private final String name;
-	private final Tag<Block> blockTag;
+	private final TagKey<Block> blockTag;
 
-	private ForgeMaterialTag(Tag<Block> blockTag, String name)
+	private ForgeMaterialTag(TagKey<Block> blockTag, String name)
 	{
 		this.blockTag = blockTag;
 		this.name = name;
 	}
 
-	public Tag<Block> getTag()
+	public TagKey<Block> getTag()
 	{
 		return this.blockTag;
 	}

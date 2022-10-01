@@ -13,6 +13,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.mojang.datafixers.util.Pair;
 import com.pg85.otg.core.presets.Preset;
 import com.pg85.otg.forge.gen.OTGNoiseChunkGenerator;
 import com.pg85.otg.util.biome.OTGBiomeResourceLocation;
@@ -20,11 +21,14 @@ import com.pg85.otg.util.biome.OTGBiomeResourceLocation;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.Heightmap.Types;
 import net.minecraft.server.level.ServerLevel;
 
@@ -76,8 +80,14 @@ public class TpCommand extends BaseCommand
 		ResourceLocation key = new ResourceLocation(new OTGBiomeResourceLocation(preset.getPresetFolder(),
 				preset.getShortPresetName(), preset.getMajorVersion(), biome).toResourceLocationString());
 
-		BlockPos pos = world.findNearestBiome(world.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getHolder(key).get(),
+		Registry<Biome> biomes = world.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY);
+
+		Holder<Biome> biomeHolder = biomes.getHolder(ResourceKey.create(Registry.BIOME_REGISTRY, key)).get();
+
+		Pair<BlockPos, Holder<Biome>> posRet = world.findNearestBiome(p -> biomeHolder.is(p.unwrapKey().get()),
 				new BlockPos(source.getPosition()), range, 8);
+
+		BlockPos pos = posRet.getFirst();
 
 		if (pos == null)
 		{

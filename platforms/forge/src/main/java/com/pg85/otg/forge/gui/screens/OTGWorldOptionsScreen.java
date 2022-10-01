@@ -27,12 +27,12 @@ public class OTGWorldOptionsScreen extends WorldGenSettingsComponent
 	private int width;
 	private CycleButton<WorldPreset> typeButton;
 	private Button customizeTypeButton;
-	private RegistryAccess.RegistryHolder registryHolder;
+	private RegistryAccess registryHolder;
 	public WorldGenSettings settings;
 	protected Optional<WorldPreset> preset;
 	private OptionalLong seed;
 
-	public OTGWorldOptionsScreen(RegistryAccess.RegistryHolder p_i242065_1_, WorldGenSettings p_i242065_2_, Optional<WorldPreset> p_i242065_3_, OptionalLong p_i242065_4_)
+	public OTGWorldOptionsScreen(RegistryAccess.Frozen p_i242065_1_, WorldGenSettings p_i242065_2_, Optional<WorldPreset> p_i242065_3_, OptionalLong p_i242065_4_)
 	{
 		super(p_i242065_1_, p_i242065_2_, p_i242065_3_, p_i242065_4_);
 		this.registryHolder = p_i242065_1_;
@@ -122,7 +122,7 @@ public class OTGWorldOptionsScreen extends WorldGenSettingsComponent
 	}
 
 	@Override
-	public RegistryAccess.RegistryHolder registryHolder()
+	public RegistryAccess registryHolder()
 	{
 		return this.registryHolder;
 	}	

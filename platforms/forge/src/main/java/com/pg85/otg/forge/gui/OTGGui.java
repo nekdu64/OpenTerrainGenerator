@@ -116,8 +116,8 @@ public class OTGGui
 							// settings when leaving customisation menu.
 							(dimGenSettings) ->
 							{
-								RegistryAccess.RegistryHolder dynamicRegistries = createWorldScreen.worldGenSettingsComponent.registryHolder();
-								WritableRegistry<DimensionType> dimensionTypesRegistry = dynamicRegistries.ownedRegistryOrThrow(Registry.DIMENSION_TYPE_REGISTRY);
+								RegistryAccess dynamicRegistries = createWorldScreen.worldGenSettingsComponent.registryHolder();
+								Registry<DimensionType> dimensionTypesRegistry = dynamicRegistries.ownedRegistryOrThrow(Registry.DIMENSION_TYPE_REGISTRY);
 								Registry<Biome> biomesRegistry = dynamicRegistries.registryOrThrow(Registry.BIOME_REGISTRY);
 								Registry<NoiseGeneratorSettings> dimensionSettingsRegistry = dynamicRegistries.registryOrThrow(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY);
 								Registry<NoiseParameters> noiseParamsRegistry = dynamicRegistries.registryOrThrow(Registry.NOISE_REGISTRY);

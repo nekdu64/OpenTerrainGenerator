@@ -19,6 +19,7 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ExtraCodecs;
@@ -279,9 +280,9 @@ public class OTGBiomeProvider extends BiomeSource implements ILayerSource
 	// TODO: This is only used by MC internally, OTG fetches all biomes via CachedBiomeProvider.
 	// Could make this use the cache too?
 	@Override
-	public Biome getNoiseBiome(int biomeX, int biomeY, int biomeZ, Sampler p_186738_)
+	public Holder<Biome> getNoiseBiome(int biomeX, int biomeY, int biomeZ, Sampler p_186738_)
 	{
-		return this.registry.get(this.keyLookup.get(this.layer.get().sample(biomeX, biomeZ)));
+		return this.registry.getHolderOrThrow(this.keyLookup.get(this.layer.get().sample(biomeX, biomeZ)));
 	}
 
 	@Override

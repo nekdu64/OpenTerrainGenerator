@@ -54,7 +54,7 @@ public class ClientFogHandler
 		}
 
 		ResourceLocation key = Minecraft.getInstance().level.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY)
-				.getKey(Minecraft.getInstance().level.getBiome(event.getCamera().getBlockPosition()));
+				.getKey(Minecraft.getInstance().level.getBiome(event.getCamera().getBlockPosition()).value());
 
 		BiomeSettingSyncWrapper wrapper = OTGClientSyncManager.getSyncedData().get(key.toString());
 
@@ -201,7 +201,7 @@ public class ClientFogHandler
 		}
 
 		ResourceLocation key = Minecraft.getInstance().level.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY)
-				.getKey(Minecraft.getInstance().level.getBiome(blockpos));
+				.getKey(Minecraft.getInstance().level.getBiome(blockpos).value());
 
 		BiomeSettingSyncWrapper wrapper = OTGClientSyncManager.getSyncedData().get(key.toString());
 

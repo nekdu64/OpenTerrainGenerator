@@ -15,6 +15,7 @@ import com.pg85.otg.interfaces.IBiomeConfig;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.core.Holder;
 import net.minecraft.util.random.WeightedRandomList;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.resources.ResourceKey;
@@ -54,7 +55,7 @@ public class BiomeCommand extends BaseCommand
 			return 0;
 		}
 
-		Biome biome = source.getLevel()
+		Holder<Biome> biome = source.getLevel()
 				.getBiome(new BlockPos(source.getPosition().x, source.getPosition().y, source.getPosition().z));
 		IBiomeConfig config = ((OTGNoiseChunkGenerator) source.getLevel().getChunkSource().getGenerator())
 				.getCachedBiomeProvider().getBiomeConfig((int) source.getPosition().x, (int) source.getPosition().z);
@@ -77,16 +78,16 @@ public class BiomeCommand extends BaseCommand
 							.append(new TextComponent(" biome.").withStyle(ChatFormatting.GOLD)),
 					false);
 		}
-		source.sendSuccess(createComponent("Biome registry name: ", biome.getRegistryName().toString(),
+		source.sendSuccess(createComponent("Biome registry name: ", biome.unwrapKey().get().location().toString(),
 				ChatFormatting.GOLD, ChatFormatting.GREEN), false);
 
 		switch (option)
 		{
 		case "info":
-			showBiomeInfo(source, biome, config);
+			showBiomeInfo(source, biome.value(), config);
 			break;
 		case "spawns":
-			showBiomeMobs(source, biome, config);
+			showBiomeMobs(source, biome.value(), config);
 			break;
 		default:
 			break;
@@ -100,8 +101,8 @@ public class BiomeCommand extends BaseCommand
 				.getTypes(ResourceKey.create(Registry.BIOME_REGISTRY, biome.getRegistryName())).stream()
 				.map(BiomeDictionary.Type::getName).collect(Collectors.toSet());
 
-		source.sendSuccess(createComponent("Biome Category: ", biome.getBiomeCategory().toString(), ChatFormatting.GOLD,
-				ChatFormatting.GREEN), false);
+//		source.sendSuccess(createComponent("Biome Category: ", biome.getBiomeCategory().toString(), ChatFormatting.GOLD,
+//				ChatFormatting.GREEN), false);
 		source.sendSuccess(
 				createComponent("Biome Tags: ", String.join(", ", types), ChatFormatting.GOLD, ChatFormatting.GREEN),
 				false);

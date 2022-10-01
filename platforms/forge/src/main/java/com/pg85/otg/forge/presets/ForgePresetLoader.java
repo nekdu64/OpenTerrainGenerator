@@ -588,7 +588,10 @@ public class ForgePresetLoader extends LocalPresetLoader
 							if(category != null)
 							{								
 								innerExcludedCategories.add(category);
-								biomesForTags.stream().filter(a -> ForgeRegistries.BIOMES.getValue(a.location()) != null && ForgeRegistries.BIOMES.getValue(a.location()).getBiomeCategory() != category).collect(Collectors.toList());
+								biomesForTags.stream().filter(a ->
+										ForgeRegistries.BIOMES.getValue(a.location()) != null
+//												&& ForgeRegistries.BIOMES.getValue(a.location()).getBiomeCategory() != category
+								).collect(Collectors.toList());
 							} else {
 								if(OTG.getEngine().getLogger().getLogCategoryEnabled(LogCategory.BIOME_REGISTRY))
 								{
@@ -607,10 +610,10 @@ public class ForgePresetLoader extends LocalPresetLoader
 								biomesForTags.addAll(
 									ForgeRegistries.BIOMES.getValues().stream()
 										.filter(biome -> 
-											biome.getBiomeCategory() == category &&
+//											biome.getBiomeCategory() == category &&
 											!excludedBiomes.contains(biome) &&
-											!excludedCategories.contains(biome.getBiomeCategory()) &&
-											!innerExcludedCategories.contains(biome.getBiomeCategory()) &&
+//											!excludedCategories.contains(biome.getBiomeCategory()) &&
+//											!innerExcludedCategories.contains(biome.getBiomeCategory()) &&
 											excludedTags.stream().allMatch(type -> !BiomeDictionary.hasType(ResourceKey.create(Registry.BIOME_REGISTRY, biome.getRegistryName()), type)) &&
 											!blackListedBiomes.contains(biome.getRegistryName().toString()) &&
 											!biome.getRegistryName().getNamespace().equals(Constants.MOD_ID_SHORT) &&
@@ -702,8 +705,8 @@ public class ForgePresetLoader extends LocalPresetLoader
 								tags.stream().allMatch(tag -> BiomeDictionary.hasType(key, tag)) &&
 								ForgeRegistries.BIOMES.getValue(key.location()) != null &&
 								!excludedBiomes.contains(ForgeRegistries.BIOMES.getValue(key.location())) &&
-								!excludedCategories.contains(ForgeRegistries.BIOMES.getValue(key.location()).getBiomeCategory()) &&
-								!innerExcludedCategories.contains(ForgeRegistries.BIOMES.getValue(key.location()).getBiomeCategory()) &&
+//								!excludedCategories.contains(ForgeRegistries.BIOMES.getValue(key.location()).getBiomeCategory()) &&
+//								!innerExcludedCategories.contains(ForgeRegistries.BIOMES.getValue(key.location()).getBiomeCategory()) &&
 								excludedTags.stream().allMatch(type -> !BiomeDictionary.hasType(ResourceKey.create(Registry.BIOME_REGISTRY, key.location()), type)) &&
 								innerExcludedTags.stream().allMatch(type -> !BiomeDictionary.hasType(ResourceKey.create(Registry.BIOME_REGISTRY, key.location()), type)) &&
 								!blackListedBiomes.contains(key.location().toString()) &&
@@ -746,7 +749,7 @@ public class ForgePresetLoader extends LocalPresetLoader
 								{
 									if(OTG.getEngine().getLogger().getLogCategoryEnabled(LogCategory.BIOME_REGISTRY))
 									{
-										OTG.getEngine().getLogger().log(LogLevel.INFO, LogCategory.BIOME_REGISTRY, "Biome " + biomeForTag.location().toString() + " found for " + templateBiome.toString() + " with temperature: " + biome.getBaseTemperature() + " Category: " + biome.getBiomeCategory() + " Tags: " + String.join(",", BiomeDictionary.getTypes(ResourceKey.create(Registry.BIOME_REGISTRY, biome.getRegistryName())).stream().map(a -> a.getName()).collect(Collectors.toList())));
+										OTG.getEngine().getLogger().log(LogLevel.INFO, LogCategory.BIOME_REGISTRY, "Biome " + biomeForTag.location().toString() + " found for " + templateBiome.toString() + " with temperature: " + biome.getBaseTemperature() + " Tags: " + String.join(",", BiomeDictionary.getTypes(ResourceKey.create(Registry.BIOME_REGISTRY, biome.getRegistryName())).stream().map(a -> a.getName()).collect(Collectors.toList())));
 									}										
 									biomeConfigsByResourceLocation.put(otgLocation, biomeConfig.createTemplateBiome());
 									biomeConfigsByName.put(biomeConfig.getName(), biomeConfig);
@@ -1037,7 +1040,9 @@ public class ForgePresetLoader extends LocalPresetLoader
 							if(category != null)
 							{
 								innerExcludedCategories.add(category);
-								biomesForTags.stream().filter(a -> ForgeRegistries.BIOMES.getValue(a.location()) != null && ForgeRegistries.BIOMES.getValue(a.location()).getBiomeCategory() != category).collect(Collectors.toList());
+								biomesForTags.stream().filter(a -> ForgeRegistries.BIOMES.getValue(a.location()) != null
+//										&& ForgeRegistries.BIOMES.getValue(a.location()).getBiomeCategory() != category
+								).collect(Collectors.toList());
 							} else {
 								if(OTG.getEngine().getLogger().getLogCategoryEnabled(LogCategory.BIOME_REGISTRY))
 								{
@@ -1056,10 +1061,10 @@ public class ForgePresetLoader extends LocalPresetLoader
 								biomesForTags.addAll(
 									ForgeRegistries.BIOMES.getValues().stream()
 										.filter(biome -> 
-											biome.getBiomeCategory() == category &&
+//											biome.getBiomeCategory() == category &&
 											!excludedBiomes.contains(biome) &&
-											!excludedCategories.contains(biome.getBiomeCategory()) &&
-											!innerExcludedCategories.contains(biome.getBiomeCategory()) &&
+//											!excludedCategories.contains(biome.getBiomeCategory()) &&
+//											!innerExcludedCategories.contains(biome.getBiomeCategory()) &&
 											excludedTags.stream().allMatch(type -> !BiomeDictionary.hasType(ResourceKey.create(Registry.BIOME_REGISTRY, biome.getRegistryName()), type)) &&
 											!blackListedBiomes.contains(biome.getRegistryName().toString()) &&
 											!biome.getRegistryName().getNamespace().equals(Constants.MOD_ID_SHORT) &&
@@ -1151,8 +1156,8 @@ public class ForgePresetLoader extends LocalPresetLoader
 								tags.stream().allMatch(tag -> BiomeDictionary.hasType(key, tag)) &&
 								ForgeRegistries.BIOMES.getValue(key.location()) != null &&
 								!excludedBiomes.contains(ForgeRegistries.BIOMES.getValue(key.location())) &&
-								!excludedCategories.contains(ForgeRegistries.BIOMES.getValue(key.location()).getBiomeCategory()) &&
-								!innerExcludedCategories.contains(ForgeRegistries.BIOMES.getValue(key.location()).getBiomeCategory()) &&
+//								!excludedCategories.contains(ForgeRegistries.BIOMES.getValue(key.location()).getBiomeCategory()) &&
+//								!innerExcludedCategories.contains(ForgeRegistries.BIOMES.getValue(key.location()).getBiomeCategory()) &&
 								excludedTags.stream().allMatch(type -> !BiomeDictionary.hasType(ResourceKey.create(Registry.BIOME_REGISTRY, key.location()), type)) &&
 								innerExcludedTags.stream().allMatch(type -> !BiomeDictionary.hasType(ResourceKey.create(Registry.BIOME_REGISTRY, key.location()), type)) &&
 								!blackListedBiomes.contains(key.location().toString()) &&
