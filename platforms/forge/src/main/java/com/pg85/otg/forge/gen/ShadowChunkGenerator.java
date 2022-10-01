@@ -25,6 +25,7 @@ import com.pg85.otg.util.materials.LocalMaterials;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import net.minecraft.data.worldgen.StructureFeatures;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
@@ -43,6 +44,7 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.GenerationStep.Decoration;
 import net.minecraft.world.level.levelgen.StructureSettings;
 import net.minecraft.world.level.levelgen.feature.configurations.StructureFeatureConfiguration;
+import net.minecraft.world.level.levelgen.structure.StructureSet;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraft.server.level.ServerLevel;
 
@@ -117,7 +119,7 @@ public class ShadowChunkGenerator
 			{
 				for(int i = 0; i < this.maxConcurrent; i++)
 				{
-					@SuppressWarnings("deprecation")
+					//@SuppressWarnings("deprecation")
 					Worker thread = this.new Worker(i, this.unloadedChunksCache, this.chunksToLoad, this.chunksBeingLoaded, worldGenRegion.getLevel(), chunkGenerator, biomeProvider, otgChunkGenerator, dimensionStructuresSettings, worldHeightCap);
 					this.threads[i] = thread;
 					thread.start(worldGenRegion.getRandom());
@@ -365,7 +367,7 @@ public class ShadowChunkGenerator
 						structure.step() == Decoration.SURFACE_STRUCTURES &&
 						(
 							!noiseAffectingStructuresOnly ||
-							StructureFeature.NOISE_AFFECTING_FEATURES.contains(structure)
+							StructureFeatures.NOISE_AFFECTING_FEATURES.contains(structure)
 						)
 					)
 					{
@@ -437,7 +439,7 @@ public class ShadowChunkGenerator
 						}
 					}
 				}
-				chunksHandled.putIfAbsent(chunkToHandle, new Integer(0));
+				chunksHandled.putIfAbsent(chunkToHandle, 0);
 			}
 			if(noiseAffectingStructuresOnly)
 			{
@@ -488,6 +490,9 @@ public class ShadowChunkGenerator
 	// Taken from PillagerOutpostStructure.isNearVillage
 	private boolean hasStructureStart(ConfiguredStructureFeature<?, ?> structureFeature, StructureSettings dimensionStructuresSettings, long seed, ChunkPos chunkPos)
 	{
+		//Now a StructurePlacement?
+		StructureSet set = null;
+		set.placement().isFeatureChunk(null, seed, chunkPos.x, chunkPos.z);
 		StructureFeatureConfiguration structureSeparationSettings = dimensionStructuresSettings.getConfig(structureFeature.feature);
 		if (structureSeparationSettings != null)
 		{

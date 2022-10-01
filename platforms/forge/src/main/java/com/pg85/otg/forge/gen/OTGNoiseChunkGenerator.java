@@ -3,31 +3,22 @@ package com.pg85.otg.forge.gen;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Maps;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.pg85.otg.constants.Constants;
 import com.pg85.otg.constants.SettingsEnums.CustomStructureType;
-import com.pg85.otg.constants.SettingsEnums.MineshaftType;
-import com.pg85.otg.constants.SettingsEnums.OceanRuinsType;
-import com.pg85.otg.constants.SettingsEnums.RareBuildingType;
-import com.pg85.otg.constants.SettingsEnums.RuinedPortalType;
-import com.pg85.otg.constants.SettingsEnums.VillageType;
 import com.pg85.otg.core.OTG;
 import com.pg85.otg.core.config.dimensions.DimensionConfig;
 import com.pg85.otg.core.config.dimensions.DimensionConfig.OTGDimension;
+import com.pg85.otg.core.config.world.WorldConfig;
 import com.pg85.otg.core.gen.OTGChunkDecorator;
 import com.pg85.otg.core.gen.OTGChunkGenerator;
 import com.pg85.otg.core.presets.Preset;
@@ -38,13 +29,13 @@ import com.pg85.otg.forge.biome.ForgeBiome;
 import com.pg85.otg.forge.biome.OTGBiomeProvider;
 import com.pg85.otg.interfaces.*;
 import com.pg85.otg.util.ChunkCoordinate;
-import com.pg85.otg.util.biome.OTGBiomeResourceLocation;
 import com.pg85.otg.util.gen.ChunkBuffer;
 import com.pg85.otg.util.gen.JigsawStructureData;
 import com.pg85.otg.util.logging.LogCategory;
 import com.pg85.otg.util.logging.LogLevel;
 import com.pg85.otg.util.materials.LocalMaterialData;
 
+import com.pg85.otg.util.minecraft.StructureType;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -53,19 +44,10 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.CrashReport;
 import net.minecraft.ReportedException;
 import net.minecraft.SharedConstants;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
-import net.minecraft.core.SectionPos;
-import net.minecraft.data.BuiltinRegistries;
-import net.minecraft.data.worldgen.BastionPieces;
-import net.minecraft.data.worldgen.DesertVillagePools;
-import net.minecraft.data.worldgen.PillagerOutpostPools;
-import net.minecraft.data.worldgen.PlainVillagePools;
-import net.minecraft.data.worldgen.SavannaVillagePools;
-import net.minecraft.data.worldgen.SnowyVillagePools;
-import net.minecraft.data.worldgen.StructureFeatures;
-import net.minecraft.data.worldgen.TaigaVillagePools;
+import net.minecraft.core.*;
+import net.minecraft.data.worldgen.*;
 import net.minecraft.resources.RegistryLookupCodec;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.WorldGenRegion;
@@ -88,23 +70,17 @@ import net.minecraft.world.level.levelgen.Heightmap.Types;
 import net.minecraft.world.level.levelgen.blending.Blender;
 import net.minecraft.world.level.levelgen.carver.CarvingContext;
 import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
-import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
-import net.minecraft.world.level.levelgen.feature.MineshaftFeature;
 import net.minecraft.world.level.levelgen.feature.StructureFeature;
-import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
-import net.minecraft.world.level.levelgen.feature.configurations.JigsawConfiguration;
-import net.minecraft.world.level.levelgen.feature.configurations.MineshaftConfiguration;
-import net.minecraft.world.level.levelgen.feature.configurations.OceanRuinConfiguration;
-import net.minecraft.world.level.levelgen.feature.configurations.ProbabilityFeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.StrongholdConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.StructureFeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.structures.JigsawJunction;
 import net.minecraft.world.level.levelgen.feature.structures.StructureTemplatePool.Projection;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
-import net.minecraft.world.level.levelgen.structure.BoundingBox;
-import net.minecraft.world.level.levelgen.structure.OceanRuinFeature;
-import net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece;
-import net.minecraft.world.level.levelgen.structure.StructurePiece;
+import net.minecraft.world.level.levelgen.structure.*;
+import net.minecraft.world.level.levelgen.structure.placement.ConcentricRingsStructurePlacement;
+import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
+import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadType;
+import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
 import net.minecraft.world.level.levelgen.synth.NormalNoise;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.api.distmarker.Dist;
@@ -115,36 +91,36 @@ public final class OTGNoiseChunkGenerator extends ChunkGenerator
 {
 	// Create a codec to serialise/deserialise OTGNoiseChunkGenerator
 	public static final Codec<OTGNoiseChunkGenerator> CODEC = RecordCodecBuilder.create(
-		(p_236091_0_) ->
-		{
-			return p_236091_0_
+		(builder) ->
+			builder
 				.group(
 					Codec.STRING.fieldOf("preset_folder_name").forGetter(
-						(p_236090_0_) -> { return p_236090_0_.preset.getFolderName(); }
+						p -> p.preset.getFolderName()
 					),
 					Codec.STRING.fieldOf("dim_config_name").forGetter(
-						(p_236090_0_) -> { return p_236090_0_.dimConfigName; }
-					),
-					RegistryLookupCodec.create(Registry.NOISE_REGISTRY).forGetter(
-						(p_188716_) -> { return p_188716_.noises; }
+						p -> p.dimConfigName
 					),
 					BiomeSource.CODEC.fieldOf("biome_source").forGetter(
-						(p_236096_0_) -> { return p_236096_0_.biomeSource; }
+						p -> p.biomeSource
+					),
+					RegistryOps.retrieveRegistry(Registry.STRUCTURE_SET_REGISTRY).forGetter(
+						p -> p.structureSets
+					),
+					RegistryOps.retrieveRegistry(Registry.NOISE_REGISTRY).forGetter(
+						p -> p.noiseRegistry
 					),
 					Codec.LONG.fieldOf("seed").stable().forGetter(
-						(p_236093_0_) -> { return p_236093_0_.seed; }
+						p -> p.seed
 					),
 					NoiseGeneratorSettings.CODEC.fieldOf("settings").forGetter(
-						(p_236090_0_) -> { return p_236090_0_.dimensionSettingsSupplier; }
+						p -> p.generatorSettingsHolder
 					)
 				).apply(
-					p_236091_0_, p_236091_0_.stable(OTGNoiseChunkGenerator::new)
+					builder, builder.stable(OTGNoiseChunkGenerator::new)
 				)
-			;
-		}
 	);
 
-	private final Supplier<NoiseGeneratorSettings> dimensionSettingsSupplier;
+	private final Holder<NoiseGeneratorSettings> generatorSettingsHolder;
 	private final int noiseHeight;
 	//private final SurfaceNoise surfaceNoise;
 	//protected final WorldgenRandom random;
@@ -152,13 +128,14 @@ public final class OTGNoiseChunkGenerator extends ChunkGenerator
 	private final ShadowChunkGenerator shadowChunkGenerator;
 	private final OTGChunkGenerator internalGenerator;
 	private final OTGChunkDecorator chunkDecorator;
-	protected final BlockState defaultBlock;
-	protected final BlockState defaultFluid;
-	private final Registry<NormalNoise.NoiseParameters> noises;
-	protected final long seed;
+	private final BlockState defaultBlock;
+	private final BlockState defaultFluid;
+	private final Registry<NormalNoise.NoiseParameters> noiseRegistry;
+	private final long seed;
 	private final Preset preset;
 	private final String dimConfigName;
 	private final DimensionConfig dimConfig;
+	private final HashMap<StructureType, StructurePlacement> structurePlacementSettings;
 	private CustomStructureCache structureCache; // TODO: Move this?
 	
 	// TODO: Modpack config specific, move this?
@@ -168,29 +145,30 @@ public final class OTGNoiseChunkGenerator extends ChunkGenerator
 	private String portalMob;
 	private String portalIgnitionSource;
 
-	public OTGNoiseChunkGenerator(Registry<NormalNoise.NoiseParameters> noises, BiomeSource biomeProvider, long seed, Supplier<NoiseGeneratorSettings> dimensionSettingsSupplier)
+	public OTGNoiseChunkGenerator(BiomeSource biomeProvider, long seed, Registry<StructureSet> structureSetRegistry, Registry<NormalNoise.NoiseParameters> noiseRegistry, Holder<NoiseGeneratorSettings> dimensionSettingsSupplier)
 	{
-		this(OTG.getEngine().getPresetLoader().getDefaultPresetFolderName(), null, noises, biomeProvider, biomeProvider, seed, dimensionSettingsSupplier);
+		this(OTG.getEngine().getPresetLoader().getDefaultPresetFolderName(), null, biomeProvider, biomeProvider, structureSetRegistry, noiseRegistry, seed, dimensionSettingsSupplier);
 	}
 
-	public OTGNoiseChunkGenerator(String presetFolderName, String dimConfigName, Registry<NormalNoise.NoiseParameters> noises, BiomeSource biomeProvider, long seed, Supplier<NoiseGeneratorSettings> dimensionSettingsSupplier)
+	public OTGNoiseChunkGenerator(String presetFolderName, String dimConfigName, BiomeSource biomeSource, Registry<StructureSet> structureSetRegistry, Registry<NormalNoise.NoiseParameters> noiseRegistry, long seed, Holder<NoiseGeneratorSettings> dimensionSettingsSupplier)
 	{
-		this(presetFolderName, dimConfigName, noises, biomeProvider, biomeProvider, seed, dimensionSettingsSupplier);
+		this(presetFolderName, dimConfigName, biomeSource, biomeSource, structureSetRegistry, noiseRegistry, seed, dimensionSettingsSupplier);
 	}
 
 	// TODO: Why are there 2 biome providers, and why does getBiomeProvider() return the second, while we're using the first?
 	// It looks like vanilla just inserts the same biomeprovider twice?
-	@SuppressWarnings("deprecation")
-	private OTGNoiseChunkGenerator(String presetFolderName, String dimConfigName, Registry<NormalNoise.NoiseParameters> noises, BiomeSource biomeProvider1, BiomeSource biomeProvider2, long seed, Supplier<NoiseGeneratorSettings> dimensionSettingsSupplier)
+	// Vanilla has two biome sources, where the first is population and the second is runtime. Don't know the practical difference this makes.
+	//@SuppressWarnings("deprecation")
+	private OTGNoiseChunkGenerator(String presetFolderName, String dimConfigName, BiomeSource biomePopulationSource, BiomeSource biomeRuntimeSource, Registry<StructureSet> structureSetRegistry, Registry<NormalNoise.NoiseParameters> noiseRegistry, long seed, Holder<NoiseGeneratorSettings> dimensionSettingsHolder)
 	{
-		super(biomeProvider1, biomeProvider2, overrideStructureSettings(dimensionSettingsSupplier.get().structureSettings(), presetFolderName, (OTGBiomeProvider)biomeProvider1), seed);
+		super(structureSetRegistry, Optional.of(getEnabledStructures(presetFolderName)), biomePopulationSource, biomeRuntimeSource, seed);
 
-		if (!(biomeProvider1 instanceof ILayerSource))
+		if (!(biomePopulationSource instanceof ILayerSource))
 		{
 			throw new RuntimeException("OTG has detected an incompatible biome provider- try using otg:otg as the biome source name");
 		}
 
-		this.noises = noises;
+		this.noiseRegistry = noiseRegistry;
 		this.seed = seed;
 		this.preset = OTG.getEngine().getPresetLoader().getPresetByFolderName(presetFolderName);
 		if(dimConfigName != null && dimConfigName.trim().length() > 0)
@@ -201,445 +179,93 @@ public final class OTGNoiseChunkGenerator extends ChunkGenerator
 			this.dimConfigName = "";
 			this.dimConfig = null;
 		}
-		this.dimensionSettingsSupplier = dimensionSettingsSupplier;		
-		NoiseGeneratorSettings dimensionsettings = dimensionSettingsSupplier.get();
-		this.defaultBlock = dimensionsettings.getDefaultBlock();
-		this.defaultFluid = dimensionsettings.getDefaultFluid();		
-		NoiseSettings noisesettings = dimensionsettings.noiseSettings();
-		//this.random = new WorldgenRandom(seed);
-		//this.surfaceNoise = (SurfaceNoise)(noisesettings.useSimplexSurfaceNoise() ? new PerlinSimplexNoise(this.random, IntStream.rangeClosed(-3, 0)) : new PerlinNoise(this.random, IntStream.rangeClosed(-3, 0)));
+		this.generatorSettingsHolder = dimensionSettingsHolder;
+		NoiseGeneratorSettings genSettings = dimensionSettingsHolder.value();
+		NoiseSettings noisesettings = genSettings.noiseSettings();
+		this.defaultBlock = genSettings.defaultBlock();
+		this.defaultFluid = genSettings.defaultFluid();
 		this.noiseHeight = noisesettings.height();
-
+		this.structurePlacementSettings = getStructurePlacementMap(preset.getWorldConfig());
 		this.shadowChunkGenerator = new ShadowChunkGenerator(OTG.getEngine().getPluginConfig().getMaxWorkerThreads());
-		this.internalGenerator = new OTGChunkGenerator(this.preset, seed, (ILayerSource) biomeProvider1,((ForgePresetLoader)OTG.getEngine().getPresetLoader()).getGlobalIdMapping(presetFolderName), OTG.getEngine().getLogger());
+		this.internalGenerator = new OTGChunkGenerator(this.preset, seed, (ILayerSource) biomePopulationSource,((ForgePresetLoader)OTG.getEngine().getPresetLoader()).getGlobalIdMapping(presetFolderName), OTG.getEngine().getLogger());
 		this.chunkDecorator = new OTGChunkDecorator();
 	}
 	
 	// Structure settings
-	
-	private static StructureSettings overrideStructureSettings(StructureSettings oldSettings, String presetFolderName, OTGBiomeProvider otgBiomeProvider)
+
+	// Method to remove structures which have been disabled in the world config
+	// TODO: This only handles which structures can exist in the world, *not* what structures spawn
+	// 	in certain biomes. In 1.18.2 and on, it seems we need to define this with biome tags.
+	// 	From what I can see, we need to have preset makers do this with datapacks. Should be doable.
+	private static HolderSet<StructureSet> getEnabledStructures(String presetFolderName)
 	{
 		Preset preset = OTG.getEngine().getPresetLoader().getPresetByFolderName(presetFolderName);
 		IWorldConfig worldConfig = preset.getWorldConfig();
-		com.google.common.collect.ImmutableMap.Builder<StructureFeature<?>, StructureFeatureConfiguration> separationSettings = ImmutableMap.<StructureFeature<?>, StructureFeatureConfiguration>builder();
+		List<Holder<StructureSet>> holderList = new ArrayList<>();
+		HashMap<StructureType, StructurePlacement> placementSettings = getStructurePlacementMap(worldConfig);
+
+		if(worldConfig.getRareBuildingsEnabled())
+		{
+			holderList.add(Holder.direct(new StructureSet(StructureFeatures.IGLOO, placementSettings.get(StructureType.IGLOO))));
+			holderList.add(Holder.direct(new StructureSet(StructureFeatures.SWAMP_HUT, placementSettings.get(StructureType.SWAMP_HUT))));
+			holderList.add(Holder.direct(new StructureSet(StructureFeatures.DESERT_PYRAMID, placementSettings.get(StructureType.DESERT_PYRAMID))));
+			holderList.add(Holder.direct(new StructureSet(StructureFeatures.JUNGLE_TEMPLE, placementSettings.get(StructureType.JUNGLE_TEMPLE))));
+		}
+
 		if(worldConfig.getVillagesEnabled())
-		{
-			separationSettings.put(StructureFeature.VILLAGE, new StructureFeatureConfiguration(worldConfig.getVillageSpacing(), worldConfig.getVillageSeparation(), 10387312));
-		}
-		if(worldConfig.getRareBuildingsEnabled())
-		{
-			separationSettings.put(StructureFeature.DESERT_PYRAMID, new StructureFeatureConfiguration(worldConfig.getDesertPyramidSpacing(), worldConfig.getDesertPyramidSeparation(), 14357617));
-		}
-		if(worldConfig.getRareBuildingsEnabled())
-		{
-			separationSettings.put(StructureFeature.IGLOO, new StructureFeatureConfiguration(worldConfig.getIglooSpacing(), worldConfig.getIglooSeparation(), 14357618));
-		}
-		if(worldConfig.getRareBuildingsEnabled())
-		{
-			separationSettings.put(StructureFeature.JUNGLE_TEMPLE, new StructureFeatureConfiguration(worldConfig.getJungleTempleSpacing(), worldConfig.getJungleTempleSeparation(), 14357619));
-		}
-		if(worldConfig.getRareBuildingsEnabled())
-		{
-			separationSettings.put(StructureFeature.SWAMP_HUT, new StructureFeatureConfiguration(worldConfig.getSwampHutSpacing(), worldConfig.getSwampHutSeparation(), 14357620));
-		}
+			holderList.add(Holder.direct(new StructureSet(StructureSets.VILLAGES.value().structures(), placementSettings.get(StructureType.VILLAGE))));
 		if(worldConfig.getPillagerOutpostsEnabled())
-		{
-			separationSettings.put(StructureFeature.PILLAGER_OUTPOST, new StructureFeatureConfiguration(worldConfig.getPillagerOutpostSpacing(), worldConfig.getPillagerOutpostSeparation(), 165745296));
-		}
+			holderList.add(Holder.direct(new StructureSet(StructureFeatures.PILLAGER_OUTPOST, placementSettings.get(StructureType.PILLLAGER_OUTPOST))));
 		if(worldConfig.getStrongholdsEnabled())
-		{
-			separationSettings.put(StructureFeature.STRONGHOLD, new StructureFeatureConfiguration(worldConfig.getStrongholdSpacing(), worldConfig.getStrongholdSeparation(), 0));
-		}
+			holderList.add(Holder.direct(new StructureSet(StructureFeatures.STRONGHOLD, placementSettings.get(StructureType.STRONGHOLD))));
 		if(worldConfig.getOceanMonumentsEnabled())
-		{
-			separationSettings.put(StructureFeature.OCEAN_MONUMENT, new StructureFeatureConfiguration(worldConfig.getOceanMonumentSpacing(), worldConfig.getOceanMonumentSeparation(), 10387313));
-		}
+			holderList.add(Holder.direct(new StructureSet(StructureFeatures.OCEAN_MONUMENT, placementSettings.get(StructureType.OCEAN_MONUMENT))));
 		if(worldConfig.getEndCitiesEnabled())
-		{
-			separationSettings.put(StructureFeature.END_CITY, new StructureFeatureConfiguration(worldConfig.getEndCitySpacing(), worldConfig.getEndCitySeparation(), 10387313));
-		}
+			holderList.add(Holder.direct(new StructureSet(StructureFeatures.END_CITY, placementSettings.get(StructureType.END_CITY))));
 		if(worldConfig.getWoodlandMansionsEnabled())
-		{
-			separationSettings.put(StructureFeature.WOODLAND_MANSION, new StructureFeatureConfiguration(worldConfig.getWoodlandMansionSpacing(), worldConfig.getWoodlandMansionSeparation(), 10387319));
-		}
+			holderList.add(Holder.direct(new StructureSet(StructureFeatures.WOODLAND_MANSION, placementSettings.get(StructureType.WOODLAND_MANSION))));
 		if(worldConfig.getBuriedTreasureEnabled())
-		{
-			separationSettings.put(StructureFeature.BURIED_TREASURE, new StructureFeatureConfiguration(worldConfig.getBuriedTreasureSpacing(), worldConfig.getBuriedTreasureSeparation(), 0));
-		}
+			holderList.add(Holder.direct(new StructureSet(StructureFeatures.BURIED_TREASURE, placementSettings.get(StructureType.BURIED_TREASURE))));
 		if(worldConfig.getMineshaftsEnabled())
-		{
-			separationSettings.put(StructureFeature.MINESHAFT, new StructureFeatureConfiguration(worldConfig.getMineshaftSpacing(), worldConfig.getMineshaftSeparation(), 0));
-		}
+			holderList.add(Holder.direct(new StructureSet(StructureSets.MINESHAFTS.value().structures(), placementSettings.get(StructureType.MINESHAFT))));
 		if(worldConfig.getRuinedPortalsEnabled())
-		{
-			separationSettings.put(StructureFeature.RUINED_PORTAL, new StructureFeatureConfiguration(worldConfig.getRuinedPortalSpacing(), worldConfig.getRuinedPortalSeparation(), 34222645));
-		}
+			holderList.add(Holder.direct(new StructureSet(StructureSets.RUINED_PORTALS.value().structures(), placementSettings.get(StructureType.RUINED_PORTAL))));
 		if(worldConfig.getShipWrecksEnabled())
-		{
-			separationSettings.put(StructureFeature.SHIPWRECK, new StructureFeatureConfiguration(worldConfig.getShipwreckSpacing(), worldConfig.getShipwreckSeparation(), 165745295));
-		}
+			holderList.add(Holder.direct(new StructureSet(StructureSets.SHIPWRECKS.value().structures(), placementSettings.get(StructureType.SHIPWRECK))));
 		if(worldConfig.getOceanRuinsEnabled())
-		{
-			separationSettings.put(StructureFeature.OCEAN_RUIN, new StructureFeatureConfiguration(worldConfig.getOceanRuinSpacing(), worldConfig.getOceanRuinSeparation(), 14357621));
-		}
+			holderList.add(Holder.direct(new StructureSet(StructureSets.OCEAN_RUINS.value().structures(), placementSettings.get(StructureType.OCEAN_RUINS))));
 		if(worldConfig.getBastionRemnantsEnabled())
-		{
-			separationSettings.put(StructureFeature.BASTION_REMNANT, new StructureFeatureConfiguration(worldConfig.getBastionRemnantSpacing(), worldConfig.getBastionRemnantSeparation(), 30084232));
-		}
+			holderList.add(Holder.direct(new StructureSet(StructureFeatures.BASTION_REMNANT, placementSettings.get(StructureType.BASTION_REMNANT))));
 		if(worldConfig.getNetherFortressesEnabled())
-		{
-			separationSettings.put(StructureFeature.NETHER_BRIDGE, new StructureFeatureConfiguration(worldConfig.getNetherFortressSpacing(), worldConfig.getNetherFortressSeparation(), 30084232));
-		}
+			holderList.add(Holder.direct(new StructureSet(StructureFeatures.FORTRESS, placementSettings.get(StructureType.FORTRESS))));
 		if(worldConfig.getNetherFossilsEnabled())
-		{
-			separationSettings.put(StructureFeature.NETHER_FOSSIL, new StructureFeatureConfiguration(worldConfig.getNetherFossilSpacing(), worldConfig.getNetherFossilSeparation(), 14357921));
-		}
-		separationSettings.putAll(
-			oldSettings.structureConfig().entrySet().stream().filter(a -> 
-				a.getKey() != StructureFeature.VILLAGE &&
-				a.getKey() != StructureFeature.DESERT_PYRAMID &&
-				a.getKey() != StructureFeature.IGLOO &&
-				a.getKey() != StructureFeature.JUNGLE_TEMPLE &&
-				a.getKey() != StructureFeature.SWAMP_HUT &&
-				a.getKey() != StructureFeature.PILLAGER_OUTPOST &&
-				a.getKey() != StructureFeature.STRONGHOLD &&
-				a.getKey() != StructureFeature.OCEAN_MONUMENT &&
-				a.getKey() != StructureFeature.END_CITY &&
-				a.getKey() != StructureFeature.WOODLAND_MANSION &&
-				a.getKey() != StructureFeature.BURIED_TREASURE &&
-				a.getKey() != StructureFeature.MINESHAFT &&
-				a.getKey() != StructureFeature.RUINED_PORTAL &&
-				a.getKey() != StructureFeature.SHIPWRECK &&
-				a.getKey() != StructureFeature.OCEAN_RUIN &&
-				a.getKey() != StructureFeature.BASTION_REMNANT &&
-				a.getKey() != StructureFeature.NETHER_BRIDGE &&
-				a.getKey() != StructureFeature.NETHER_FOSSIL
-			).collect(Collectors.toMap(Entry::getKey, Entry::getValue))
-		);
-
-		StructureSettings newSettings = new StructureSettings(
-			worldConfig.getStrongholdsEnabled() ? Optional.of(
-				new StrongholdConfiguration(
-					worldConfig.getStrongHoldDistance(), 
-					worldConfig.getStrongHoldSpread(), 
-					worldConfig.getStrongHoldCount()
-				)
-			) : Optional.empty(), 
-			Maps.newHashMap(separationSettings.build())
-		);
-
-		addBiomeConfigStructures(preset, preset.getWorldConfig(), otgBiomeProvider, oldSettings, newSettings);
-		
-		return newSettings;
+			holderList.add(Holder.direct(new StructureSet(StructureFeatures.NETHER_FOSSIL, placementSettings.get(StructureType.NETHER_FOSSIL))));
+		return HolderSet.direct(holderList);
 	}
-	
-	private static void addBiomeConfigStructures(Preset preset, IWorldConfig worldConfig, OTGBiomeProvider otgBiomeProvider, StructureSettings oldSettings, StructureSettings newSettings)
+
+	private static HashMap<StructureType, StructurePlacement> getStructurePlacementMap(IWorldConfig worldConfig)
 	{
-		// TODO: Currently we can only enable/disable structures per biome and use any configuration options exposed by the vanilla structure 
-		// classes (size for villages fe). If we want to be able to customise more, we'll need to implement our own structure classes.
-		// TODO: Allow users to create their own jigsaw patterns (for villages, end cities, pillager outposts etc)?
-		// TODO: Amethyst Geodes (1.17?)	
-
-		// Build vanilla structure settings for OTG biomes
-		List<ResourceKey<Biome>> biomeKeys = ((ForgePresetLoader)OTG.getEngine().getPresetLoader()).getBiomeRegistryKeys(preset.getFolderName());
-		HashMap<StructureFeature<?>, com.google.common.collect.ImmutableMultimap.Builder<ConfiguredStructureFeature<?, ?>, ResourceKey<Biome>>> hashmap = new HashMap<>();
-		preset.getAllBiomeConfigs().stream().forEach(biomeConfig -> {
-			if(!biomeConfig.getIsTemplateForBiome())
-			{
-				Optional<ResourceKey<Biome>> biomeKey = biomeKeys.stream().filter(b -> b.getRegistryName().toString().equals(biomeConfig.getRegistryKey().toResourceLocationString())).findFirst();
-				if(biomeKey.isPresent())
-				{
-					Optional<Biome> biome = otgBiomeProvider.possibleBiomes().stream().filter(b -> b.getRegistryName().toString().equals(biomeConfig.getRegistryKey().toResourceLocationString())).findFirst();
-					if(biome.isPresent())
-					{
-						// Villages
-						// TODO: Allow spawning multiple types in a single biome?
-						if(worldConfig.getVillagesEnabled() && biomeConfig.getVillageType() != VillageType.disabled)
-						{
-							int villageSize = biomeConfig.getVillageSize();
-							VillageType villageType = biomeConfig.getVillageType();
-							ConfiguredStructureFeature<JigsawConfiguration, ? extends StructureFeature<JigsawConfiguration>> customVillage = register(
-								((OTGBiomeResourceLocation)biomeConfig.getRegistryKey()).withBiomeResource("village").toResourceLocationString(),
-								StructureFeature.VILLAGE.configured(
-									new JigsawConfiguration(
-										() -> {
-											switch(villageType)
-											{
-												case sandstone:
-													return DesertVillagePools.START;
-												case savanna:
-													return SavannaVillagePools.START;
-												case taiga:
-													return TaigaVillagePools.START;
-												case wood:
-													return PlainVillagePools.START;
-												case snowy:
-													return SnowyVillagePools.START;
-												case disabled: // Should never happen
-													break;
-											}
-											return PlainVillagePools.START;
-										},
-										villageSize
-									)
-								)
-							);
-							addStructureToBiome(hashmap, customVillage, biomeKey.get());
-						}
-						
-						// Strongholds
-						if(worldConfig.getStrongholdsEnabled() && biomeConfig.getStrongholdsEnabled())
-						{
-							addStructureToBiome(hashmap, StructureFeatures.STRONGHOLD, biomeKey.get());
-						}		
-
-						// Ocean Monuments
-						if(worldConfig.getOceanMonumentsEnabled() && biomeConfig.getOceanMonumentsEnabled())
-						{
-							addStructureToBiome(hashmap, StructureFeatures.OCEAN_MONUMENT, biomeKey.get());
-						}
-						
-						// Rare buildings
-						// TODO: Allow spawning multiple types in a single biome?
-						if(worldConfig.getRareBuildingsEnabled() && biomeConfig.getRareBuildingType() != RareBuildingType.disabled)
-						{
-							switch(biomeConfig.getRareBuildingType())
-							{
-								case desertPyramid:
-									addStructureToBiome(hashmap, StructureFeatures.DESERT_PYRAMID, biomeKey.get());
-									break;
-								case igloo:
-									addStructureToBiome(hashmap, StructureFeatures.IGLOO, biomeKey.get());
-									break;
-								case jungleTemple:
-									addStructureToBiome(hashmap, StructureFeatures.JUNGLE_TEMPLE, biomeKey.get());			
-									break;
-								case swampHut:
-									addStructureToBiome(hashmap, StructureFeatures.SWAMP_HUT, biomeKey.get());
-									break;
-								case disabled:
-									break;					
-							}
-						}
-						
-						// Woodland Mansions
-						if(worldConfig.getWoodlandMansionsEnabled() && biomeConfig.getWoodlandMansionsEnabled())
-						{
-							addStructureToBiome(hashmap, StructureFeatures.WOODLAND_MANSION, biomeKey.get());
-						}
-						
-						// Nether Fortresses
-						if(worldConfig.getNetherFortressesEnabled() && biomeConfig.getNetherFortressesEnabled())
-						{
-							addStructureToBiome(hashmap, StructureFeatures.NETHER_BRIDGE, biomeKey.get());
-						}
-
-						// Mineshafts
-						if(worldConfig.getMineshaftsEnabled() && biomeConfig.getMineShaftType() != MineshaftType.disabled)
-						{
-							float mineShaftProbability = biomeConfig.getMineShaftProbability();
-							MineshaftType mineShaftType = biomeConfig.getMineShaftType();
-							ConfiguredStructureFeature<MineshaftConfiguration, ? extends StructureFeature<MineshaftConfiguration>> customMineShaft = register(
-								((OTGBiomeResourceLocation)biomeConfig.getRegistryKey()).withBiomeResource("mineshaft").toResourceLocationString(),
-								StructureFeature.MINESHAFT.configured(
-									new MineshaftConfiguration(
-										mineShaftProbability,
-										mineShaftType == MineshaftType.mesa ? MineshaftFeature.Type.MESA : MineshaftFeature.Type.NORMAL
-									)
-								)
-							);
-							addStructureToBiome(hashmap, customMineShaft, biomeKey.get());
-						}
-						
-						// Buried Treasure
-						if(worldConfig.getBuriedTreasureEnabled() && biomeConfig.getBuriedTreasureEnabled())
-						{
-							float buriedTreasureProbability = biomeConfig.getBuriedTreasureProbability();
-							ConfiguredStructureFeature<ProbabilityFeatureConfiguration, ? extends StructureFeature<ProbabilityFeatureConfiguration>> customBuriedTreasure = register(
-								((OTGBiomeResourceLocation)biomeConfig.getRegistryKey()).withBiomeResource("buried_treasure").toResourceLocationString(),
-								StructureFeature.BURIED_TREASURE.configured(new ProbabilityFeatureConfiguration(buriedTreasureProbability))
-							);
-							addStructureToBiome(hashmap, customBuriedTreasure, biomeKey.get());
-						}
-						
-						// Ocean Ruins
-						if(worldConfig.getOceanRuinsEnabled() && biomeConfig.getOceanRuinsType() != OceanRuinsType.disabled)
-						{
-							float oceanRuinsLargeProbability = biomeConfig.getOceanRuinsLargeProbability();
-							float oceanRuinsClusterProbability = biomeConfig.getOceanRuinsClusterProbability();
-							OceanRuinsType oceanRuinsType = biomeConfig.getOceanRuinsType();
-							ConfiguredStructureFeature<OceanRuinConfiguration, ? extends StructureFeature<OceanRuinConfiguration>> customOceanRuins = register(
-								((OTGBiomeResourceLocation)biomeConfig.getRegistryKey()).withBiomeResource("ocean_ruin").toResourceLocationString(),
-								StructureFeature.OCEAN_RUIN.configured(
-									new OceanRuinConfiguration(
-										oceanRuinsType == OceanRuinsType.cold ? OceanRuinFeature.Type.COLD : OceanRuinFeature.Type.WARM,
-										oceanRuinsLargeProbability,
-										oceanRuinsClusterProbability
-									)
-								)
-							);
-							addStructureToBiome(hashmap, customOceanRuins, biomeKey.get());
-						}
-
-						// Shipwrecks
-						// TODO: Allowing both types in the same biome, make sure this won't cause problems.
-						if(worldConfig.getShipWrecksEnabled())
-						{
-							if(biomeConfig.getShipWreckEnabled())
-							{
-								addStructureToBiome(hashmap, StructureFeatures.SHIPWRECK, biomeKey.get());
-							}
-							if(biomeConfig.getShipWreckBeachedEnabled())
-							{
-								addStructureToBiome(hashmap, StructureFeatures.SHIPWRECK_BEACHED, biomeKey.get());
-							}			
-						}
-						
-						// Pillager Outpost
-						if(worldConfig.getPillagerOutpostsEnabled() && biomeConfig.getPillagerOutpostEnabled())
-						{
-							int outpostSize = biomeConfig.getPillagerOutPostSize();
-							ConfiguredStructureFeature<JigsawConfiguration, ? extends StructureFeature<JigsawConfiguration>> customOutpost = register(
-								((OTGBiomeResourceLocation)biomeConfig.getRegistryKey()).withBiomeResource("pillager_outpost").toResourceLocationString(), 
-								StructureFeature.PILLAGER_OUTPOST.configured(
-									new JigsawConfiguration(
-										() -> {
-											return PillagerOutpostPools.START;
-										},
-										outpostSize
-									)
-								)
-							);
-							addStructureToBiome(hashmap, customOutpost, biomeKey.get());							
-						}
-						
-						// Bastion Remnants
-						if(worldConfig.getBastionRemnantsEnabled() && biomeConfig.getBastionRemnantEnabled())
-						{
-							int bastionRemnantSize = biomeConfig.getBastionRemnantSize();
-							ConfiguredStructureFeature<JigsawConfiguration, ? extends StructureFeature<JigsawConfiguration>> customBastionRemnant = register(
-								((OTGBiomeResourceLocation)biomeConfig.getRegistryKey()).withBiomeResource("bastion_remnant").toResourceLocationString(), 
-								StructureFeature.BASTION_REMNANT.configured(
-									new JigsawConfiguration(
-										() -> {
-											return BastionPieces.START;
-										},
-										bastionRemnantSize
-									)
-								)
-							);
-							addStructureToBiome(hashmap, customBastionRemnant, biomeKey.get());
-						}
-						
-						// Nether Fossils
-						if(worldConfig.getNetherFossilsEnabled() && biomeConfig.getNetherFossilEnabled())
-						{
-							addStructureToBiome(hashmap, StructureFeatures.NETHER_FOSSIL, biomeKey.get());
-						}
-						
-						// End Cities
-						if(worldConfig.getEndCitiesEnabled() && biomeConfig.getEndCityEnabled())
-						{
-							addStructureToBiome(hashmap, StructureFeatures.END_CITY, biomeKey.get());
-						}
-						
-						// Ruined Portals
-						if(worldConfig.getRuinedPortalsEnabled() && biomeConfig.getRuinedPortalType() != RuinedPortalType.disabled)
-						{
-							switch(biomeConfig.getRuinedPortalType())
-							{
-								case normal:
-									addStructureToBiome(hashmap, StructureFeatures.RUINED_PORTAL_STANDARD, biomeKey.get());
-									break;
-								case desert:
-									addStructureToBiome(hashmap, StructureFeatures.RUINED_PORTAL_DESERT, biomeKey.get());
-									break;
-								case jungle:
-									addStructureToBiome(hashmap, StructureFeatures.RUINED_PORTAL_JUNGLE, biomeKey.get());
-									break;
-								case swamp:
-									addStructureToBiome(hashmap, StructureFeatures.RUINED_PORTAL_SWAMP, biomeKey.get());
-									break;
-								case mountain:
-									addStructureToBiome(hashmap, StructureFeatures.RUINED_PORTAL_MOUNTAIN, biomeKey.get());
-									break;
-								case ocean:
-									addStructureToBiome(hashmap, StructureFeatures.RUINED_PORTAL_OCEAN, biomeKey.get());
-									break;
-								case nether:
-									addStructureToBiome(hashmap, StructureFeatures.RUINED_PORTAL_NETHER, biomeKey.get());
-									break;
-								case disabled:
-									break;
-							}
-						}											
-					}
-				}
-			}
-		});
-		
-		ImmutableMap<StructureFeature<?>, ImmutableMultimap<ConfiguredStructureFeature<?, ?>, ResourceKey<Biome>>> configuredStructures = 
-			hashmap.entrySet().stream().collect(
-				ImmutableMap.toImmutableMap(
-					Entry<StructureFeature<?>, com.google.common.collect.ImmutableMultimap.Builder<ConfiguredStructureFeature<?, ?>, ResourceKey<Biome>>>::getKey, 
-					(p_189370_) -> { 
-						return p_189370_.getValue().build(); 
-					}
-				)
-			)
-		;
-		
-		// Add any existing (non-vanilla) structure settings
-		HashMap<StructureFeature<?>, ImmutableMultimap<ConfiguredStructureFeature<?, ?>, ResourceKey<Biome>>> configuredStructures2 = new HashMap<>(configuredStructures);
-		oldSettings.configuredStructures.entrySet().stream().forEach(a -> {
-			if(
-				a.getKey() != StructureFeature.VILLAGE &&
-				a.getKey() != StructureFeature.DESERT_PYRAMID &&
-				a.getKey() != StructureFeature.IGLOO &&
-				a.getKey() != StructureFeature.JUNGLE_TEMPLE &&
-				a.getKey() != StructureFeature.SWAMP_HUT &&
-				a.getKey() != StructureFeature.PILLAGER_OUTPOST &&
-				a.getKey() != StructureFeature.STRONGHOLD &&
-				a.getKey() != StructureFeature.OCEAN_MONUMENT &&
-				a.getKey() != StructureFeature.END_CITY &&
-				a.getKey() != StructureFeature.WOODLAND_MANSION &&
-				a.getKey() != StructureFeature.BURIED_TREASURE &&
-				a.getKey() != StructureFeature.MINESHAFT &&
-				a.getKey() != StructureFeature.RUINED_PORTAL &&
-				a.getKey() != StructureFeature.SHIPWRECK &&
-				a.getKey() != StructureFeature.OCEAN_RUIN &&
-				a.getKey() != StructureFeature.BASTION_REMNANT &&
-				a.getKey() != StructureFeature.NETHER_BRIDGE &&
-				a.getKey() != StructureFeature.NETHER_FOSSIL
-			)
-			{
-				configuredStructures2.putIfAbsent(a.getKey(), a.getValue());
-			}
-		});
-		
-		newSettings.configuredStructures = new ImmutableMap.Builder<StructureFeature<?>, ImmutableMultimap<ConfiguredStructureFeature<?, ?>, ResourceKey<Biome>>>().putAll(configuredStructures2).build();
+		HashMap<StructureType, StructurePlacement> placementSettings =  new HashMap<>();
+		placementSettings.put(StructureType.SWAMP_HUT, new RandomSpreadStructurePlacement(worldConfig.getSwampHutSpacing(), worldConfig.getSwampHutSeparation(), RandomSpreadType.LINEAR, 14357620));
+		placementSettings.put(StructureType.IGLOO, new RandomSpreadStructurePlacement(worldConfig.getIglooSpacing(), worldConfig.getIglooSeparation(), RandomSpreadType.LINEAR, 14357618));
+		placementSettings.put(StructureType.DESERT_PYRAMID, new RandomSpreadStructurePlacement(worldConfig.getDesertPyramidSpacing(), worldConfig.getDesertPyramidSeparation(), RandomSpreadType.LINEAR, 14357617));
+		placementSettings.put(StructureType.JUNGLE_TEMPLE, new RandomSpreadStructurePlacement(worldConfig.getJungleTempleSpacing(), worldConfig.getJungleTempleSeparation(), RandomSpreadType.LINEAR, 14357619));
+		placementSettings.put(StructureType.VILLAGE, new RandomSpreadStructurePlacement(worldConfig.getVillageSpacing(), worldConfig.getVillageSeparation(), RandomSpreadType.LINEAR, 10387312));
+		placementSettings.put(StructureType.PILLLAGER_OUTPOST, new RandomSpreadStructurePlacement(worldConfig.getPillagerOutpostSpacing(), worldConfig.getPillagerOutpostSeparation(), RandomSpreadType.LINEAR, 165745296));
+		placementSettings.put(StructureType.STRONGHOLD, new ConcentricRingsStructurePlacement(worldConfig.getStrongHoldDistance(), worldConfig.getStrongHoldSpread(), worldConfig.getStrongHoldCount()));
+		placementSettings.put(StructureType.OCEAN_MONUMENT, new RandomSpreadStructurePlacement(worldConfig.getOceanMonumentSpacing(), worldConfig.getOceanMonumentSeparation(), RandomSpreadType.TRIANGULAR, 10387313));
+		placementSettings.put(StructureType.END_CITY, new RandomSpreadStructurePlacement(worldConfig.getEndCitySpacing(), worldConfig.getEndCitySeparation(), RandomSpreadType.TRIANGULAR, 10387313));
+		placementSettings.put(StructureType.WOODLAND_MANSION, new RandomSpreadStructurePlacement(worldConfig.getWoodlandMansionSpacing(), worldConfig.getWoodlandMansionSeparation(), RandomSpreadType.TRIANGULAR, 10387319));
+		placementSettings.put(StructureType.BURIED_TREASURE, new RandomSpreadStructurePlacement(worldConfig.getBuriedTreasureSpacing(), worldConfig.getBuriedTreasureSeparation(), RandomSpreadType.LINEAR, 0, new Vec3i(9, 0, 9)));
+		placementSettings.put(StructureType.MINESHAFT, new RandomSpreadStructurePlacement(worldConfig.getMineshaftSpacing(), worldConfig.getMineshaftSeparation(), RandomSpreadType.LINEAR, 0));
+		placementSettings.put(StructureType.RUINED_PORTAL, new RandomSpreadStructurePlacement(worldConfig.getRuinedPortalSpacing(), worldConfig.getRuinedPortalSeparation(), RandomSpreadType.LINEAR, 34222645));
+		placementSettings.put(StructureType.SHIPWRECK, new RandomSpreadStructurePlacement(worldConfig.getShipwreckSpacing(), worldConfig.getShipwreckSeparation(), RandomSpreadType.LINEAR, 165745295));
+		placementSettings.put(StructureType.OCEAN_RUINS, new RandomSpreadStructurePlacement(worldConfig.getOceanRuinSpacing(), worldConfig.getOceanRuinSeparation(), RandomSpreadType.LINEAR, 14357621));
+		placementSettings.put(StructureType.BASTION_REMNANT, new RandomSpreadStructurePlacement(worldConfig.getBastionRemnantSpacing(), worldConfig.getBastionRemnantSeparation(), RandomSpreadType.LINEAR, 30084232));
+		placementSettings.put(StructureType.FORTRESS, new RandomSpreadStructurePlacement(worldConfig.getNetherFortressSpacing(), worldConfig.getNetherFortressSeparation(), RandomSpreadType.LINEAR, 30084232));
+		placementSettings.put(StructureType.NETHER_FOSSIL, new RandomSpreadStructurePlacement(worldConfig.getNetherFossilSpacing(), worldConfig.getNetherFossilSeparation(), RandomSpreadType.LINEAR, 14357921));
+		return placementSettings;
 	}
-	
-	// StructureFeatures.register()
-	private static <FC extends FeatureConfiguration, F extends StructureFeature<FC>> ConfiguredStructureFeature<FC, F> register(String name, ConfiguredStructureFeature<FC, F> structure)
-	{
-		return BuiltinRegistries.register(BuiltinRegistries.CONFIGURED_STRUCTURE_FEATURE, name, structure);
-	}	
-	
-	private static void addStructureToBiome(HashMap<StructureFeature<?>, com.google.common.collect.ImmutableMultimap.Builder<ConfiguredStructureFeature<?, ?>, ResourceKey<Biome>>> hashmap, ConfiguredStructureFeature<?, ?> configuredStructureFeature, ResourceKey<Biome> biomeKey)
-	{
-		BiConsumer<ConfiguredStructureFeature<?, ?>, ResourceKey<Biome>> consumer = (p_189367_, p_189368_) -> {
-			hashmap.computeIfAbsent(
-				p_189367_.feature,
-				(p_189374_) -> { 
-					return new ImmutableMultimap.Builder<ConfiguredStructureFeature<?,?>,ResourceKey<Biome>>(); 
-				}
-			).put(p_189367_, p_189368_);
-		};
-		consumer.accept(configuredStructureFeature, biomeKey);
-	}	
-	
-	//
 	
 	public ICachedBiomeProvider getCachedBiomeProvider()
 	{
@@ -663,12 +289,7 @@ public final class OTGNoiseChunkGenerator extends ChunkGenerator
 	@Override
 	public ChunkGenerator withSeed(long seed)
 	{
-		return new OTGNoiseChunkGenerator(this.preset.getFolderName(), this.dimConfigName, this.noises, this.biomeSource.withSeed(seed), seed, this.dimensionSettingsSupplier);
-	}
-	
-	public boolean stable(long p_64376_, ResourceKey<NoiseGeneratorSettings> p_64377_)
-	{
-		return this.seed == p_64376_ && this.dimensionSettingsSupplier.get().stable(p_64377_);
+		return new OTGNoiseChunkGenerator(this.preset.getFolderName(), this.dimConfigName, this.biomeSource.withSeed(seed), this.structureSets, this.noiseRegistry, seed, this.generatorSettingsHolder);
 	}
 	
 	// Base terrain gen
@@ -1074,7 +695,7 @@ public final class OTGNoiseChunkGenerator extends ChunkGenerator
 	@Override
 	public void spawnOriginalMobs(WorldGenRegion worldGenRegion)
 	{
-		if (!this.dimensionSettingsSupplier.get().disableMobGeneration())
+		if (!this.generatorSettingsHolder.get().disableMobGeneration())
 		{
 			int chunkX = worldGenRegion.getCenter().x;
 			int chunkZ = worldGenRegion.getCenter().z;
@@ -1100,6 +721,11 @@ public final class OTGNoiseChunkGenerator extends ChunkGenerator
 		BlockState[] ablockstate = new BlockState[this.internalGenerator.getNoiseSizeY() * 8];
 		this.sampleHeightmap(x, x, ablockstate, null);
 		return new NoiseColumn(0, ablockstate);
+	}
+
+	@Override
+	public void addDebugScreenInfo(List<String> text, BlockPos pos) {
+		// TODO: what does this do? -auth
 	}
 
 	// Samples the noise at a column and provides a view of the blockstates, or fills a heightmap.
@@ -1209,13 +835,13 @@ public final class OTGNoiseChunkGenerator extends ChunkGenerator
 	@Override
 	public int getSeaLevel()
 	{
-		return this.dimensionSettingsSupplier.get().seaLevel();
+		return this.generatorSettingsHolder.get().seaLevel();
 	}
 	
 	@Override
 	public int getMinY()
 	{
-		return this.dimensionSettingsSupplier.get().noiseSettings().minY();
+		return this.generatorSettingsHolder.get().noiseSettings().minY();
 	}	
 
 	public CustomStructureCache getStructureCache(Path worldSaveFolder)
