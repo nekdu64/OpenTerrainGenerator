@@ -446,7 +446,7 @@ public class OTGChunkGenerator implements ISurfaceGeneratorNoiseProvider
 		OreVeinData data = this.oreVeinGenerator == null ? null : this.oreVeinGenerator.getForChunk(chunkCoord.getChunkX(), chunkCoord.getChunkZ());
 		
 		// Fill waterLevel array, used when placing stone/ground/surface blocks.
-		int[] waterLevel = new int[383];
+		int[] waterLevel = new int[256];
 
 		int blockX = chunkCoord.getBlockX();
 		int blockZ = chunkCoord.getBlockZ();
@@ -635,14 +635,13 @@ public class OTGChunkGenerator implements ISurfaceGeneratorNoiseProvider
 			noiseData[0] = noiseData[1];
 			noiseData[1] = xColumn;
 		}
-		// Deepslate - Frank
-		// TODO: Change this from stone and deepslate noise
+
+		// TODO: lift up into base material setting, this is not optimal
 		for (int x = 0; x < 16; x++) {
 			for (int z = 0; z < 16; z++) {
 				biomeConfig = biomes[x*16+z].getBiomeConfig();
-				for (int y = 8; y > -65; y--) {
-					// I think bedrock-like generation will do for this - Frank
-					if (y > random.nextInt(8)) continue;
+				for (int y = 8; y >= -64; y--) {
+					if (y > 0 && y > random.nextInt(8)) continue;
 					buffer.setBlock(x, y, z, biomeConfig.getDefaultDeepslateBlock());
 				}
 			}

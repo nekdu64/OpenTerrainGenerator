@@ -88,7 +88,6 @@ public class PaperMaterialReader implements IMaterialReader
 		{
 			return null;
 		}
-		// Allow for xx:xx:xx - Frank
 		if (input.matches("minecraft:[A-Za-z_]+:[0-9]+")) input = input.split(":")[1] + ":" + input.split(":")[2];
 
 		// Try parsing as an internal Minecraft name

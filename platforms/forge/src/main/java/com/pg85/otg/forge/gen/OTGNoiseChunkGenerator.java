@@ -831,17 +831,9 @@ public final class OTGNoiseChunkGenerator extends ChunkGenerator
 			{
 				ProtoChunk protoChunk = (ProtoChunk) chunk;
 				ChunkBuffer chunkBuffer = new ForgeChunkBuffer(protoChunk);
-				/*
-				* The following code exists as Minecraft 1.18 has a new "carvingMask"
-				* class that they use instead of BitSet
-				* However, that class is really just a wrapper that makes it harder
-				* to access the BitSet inside.
-				* We simply use reflections to access the BitSet
-				* Which enables us to send it up into common code.
-				*
-				* - Frank
-				* TODO: This code compiles, but it still does not generate caves on Forge.
-				 */
+
+				// CarvingMask is a platform dependent class, so we need to reflect to get the underlying bitset.
+				// TODO: maybe would be better to use a new class that contains set and get lambdas?
 				CarvingMask carvingMaskRaw = protoChunk.getOrCreateCarvingMask(stage);
 				try {
 					Field theRealMask = carvingMaskRaw.getClass().getDeclaredField("mask");

@@ -79,7 +79,6 @@ public class PaperBiome implements IBiome
 		// Surface/ground/stone blocks / sagc are done during base terrain gen.
 		// Spawn point detection checks for surfacebuilder blocks, so using ConfiguredSurfaceBuilders.GRASS.
 		// TODO: What if there's no grass around spawn?
-		// Commenting out for the time being - Frank
 		//biomeGenerationSettingsBuilder.surfaceBuilder(SurfaceBuilders.GRASS);
 
 		// * Carvers are handled by OTG
