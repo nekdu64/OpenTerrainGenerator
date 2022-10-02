@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
 
+import net.minecraft.world.level.levelgen.structure.StructureSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -117,10 +118,11 @@ public class OTGGui
 							(dimGenSettings) ->
 							{
 								RegistryAccess dynamicRegistries = createWorldScreen.worldGenSettingsComponent.registryHolder();
-								Registry<DimensionType> dimensionTypesRegistry = dynamicRegistries.ownedRegistryOrThrow(Registry.DIMENSION_TYPE_REGISTRY);
+								WritableRegistry<DimensionType> dimensionTypesRegistry = (WritableRegistry<DimensionType>) dynamicRegistries.ownedRegistryOrThrow(Registry.DIMENSION_TYPE_REGISTRY);
 								Registry<Biome> biomesRegistry = dynamicRegistries.registryOrThrow(Registry.BIOME_REGISTRY);
 								Registry<NoiseGeneratorSettings> dimensionSettingsRegistry = dynamicRegistries.registryOrThrow(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY);
 								Registry<NoiseParameters> noiseParamsRegistry = dynamicRegistries.registryOrThrow(Registry.NOISE_REGISTRY);
+								Registry<StructureSet> structureSetRegistry = dynamicRegistries.registryOrThrow(Registry.STRUCTURE_SET_REGISTRY);
 
 								long seed = dimensionGeneratorSettings.seed();
 								boolean generateFeatures = dimensionGeneratorSettings.generateFeatures();
@@ -129,24 +131,24 @@ public class OTGGui
 								// If there is a dimensionconfig for the generatorsettings, use that. Otherwise find a preset by name.
 								DimensionConfig dimConfig = dimGenSettings.dimensionConfig;
 								currentSelection = dimConfig;
-								MappedRegistry<LevelStem> dimensions = dimensionGeneratorSettings.dimensions();
+								WritableRegistry<LevelStem> dimensions = (WritableRegistry<LevelStem>) dimensionGeneratorSettings.dimensions();
 								if(dimConfig.isModpackConfig())
 								{
 									// Non-otg overworld, generatorsettings contains non-otg world type.
-									ForgeWorldPreset def = dimConfig.Overworld.NonOTGWorldType == null ? null : ForgeRegistries.WORLD_TYPES.getValue(new ResourceLocation(dimConfig.Overworld.NonOTGWorldType));
+									ForgeWorldPreset def = dimConfig.Overworld.NonOTGWorldType == null ? null : ForgeRegistries.WORLD_TYPES.get().getValue(new ResourceLocation(dimConfig.Overworld.NonOTGWorldType));
 									if(def != null)
 									{
 										WorldGenSettings existingDimSetting = def.createSettings(dynamicRegistries, seed, generateFeatures, bonusChest, dimConfig.Overworld.NonOTGGeneratorSettings);
-										dimensions = existingDimSetting.dimensions();
+										dimensions = (WritableRegistry<LevelStem>) existingDimSetting.dimensions();
 									} else {												      
 										WorldGenSettings existingDimSetting = null;
 										Registry<DimensionType> registry2 = dynamicRegistries.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY);
 										Registry<Biome> registry = dynamicRegistries.registryOrThrow(Registry.BIOME_REGISTRY);
-										MappedRegistry<LevelStem> mappedregistry = DimensionType.defaultDimensions(dynamicRegistries, seed);
+										Registry<LevelStem> mappedregistry = DimensionType.defaultDimensions(dynamicRegistries, seed);
 										String nonOTGGeneratorSettings = dimConfig.Overworld.NonOTGGeneratorSettings;
 										if(dimConfig.Overworld.NonOTGWorldType != null)
 										{
-											net.minecraftforge.common.world.ForgeWorldPreset type = net.minecraftforge.registries.ForgeRegistries.WORLD_TYPES.getValue(new net.minecraft.resources.ResourceLocation(dimConfig.Overworld.NonOTGWorldType));
+											net.minecraftforge.common.world.ForgeWorldPreset type = net.minecraftforge.registries.ForgeRegistries.WORLD_TYPES.get().getValue(new net.minecraft.resources.ResourceLocation(dimConfig.Overworld.NonOTGWorldType));
 											if (type != null)
 											{
 												existingDimSetting = type.createSettings(dynamicRegistries, seed, generateFeatures, false, nonOTGGeneratorSettings);
@@ -166,17 +168,18 @@ public class OTGGui
 														registry2, 
 														mappedregistry, 
 														new FlatLevelSource(
+																structureSetRegistry,
 															FlatLevelGeneratorSettings.CODEC.parse(dynamic).resultOrPartial(LOGGER::error)
 															.orElseGet(
 																() -> {
-																	return FlatLevelGeneratorSettings.getDefault(registry);
+																	return FlatLevelGeneratorSettings.getDefault(registry, structureSetRegistry);
 																}
 															)
 														)
 													)
 												);
 											case "debug_all_block_states":
-												existingDimSetting = new WorldGenSettings(seed, generateFeatures, bonusChest, WorldGenSettings.withOverworld(registry2, mappedregistry, new DebugLevelSource(registry)));
+												existingDimSetting = new WorldGenSettings(seed, generateFeatures, bonusChest, WorldGenSettings.withOverworld(registry2, mappedregistry, new DebugLevelSource(structureSetRegistry, registry)));
 											case "amplified":
 												existingDimSetting = new WorldGenSettings(seed, generateFeatures, bonusChest, WorldGenSettings.withOverworld(registry2, mappedregistry, WorldGenSettings.makeOverworld(dynamicRegistries, seed, NoiseGeneratorSettings.AMPLIFIED)));
 											case "largebiomes":
@@ -184,7 +187,7 @@ public class OTGGui
 											default:
 												existingDimSetting = new WorldGenSettings(seed, generateFeatures, bonusChest, WorldGenSettings.withOverworld(registry2, mappedregistry, WorldGenSettings.makeDefaultOverworld(dynamicRegistries, seed)));
 										}
-										dimensions = existingDimSetting.dimensions();
+										dimensions = (WritableRegistry<LevelStem>) existingDimSetting.dimensions();
 									}
 								}
 								else if(dimGenSettings.dimGenSettings != null)
@@ -208,7 +211,7 @@ public class OTGGui
 										seed,
 										generateFeatures,
 										bonusChest,
-										dimensions
+									(MappedRegistry<LevelStem>) dimensions
 									)
 								);
 							}

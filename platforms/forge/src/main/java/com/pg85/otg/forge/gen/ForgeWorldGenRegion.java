@@ -27,6 +27,7 @@ import com.pg85.otg.util.materials.LocalMaterialData;
 import com.pg85.otg.util.materials.LocalMaterials;
 import com.pg85.otg.util.minecraft.TreeType;
 
+import net.minecraft.data.worldgen.features.CaveFeatures;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -475,91 +476,91 @@ public class ForgeWorldGenRegion extends LocalWorldGenRegion
 			switch (type)
 			{
 				case Tree:
-					PlacedFeature oak = TreePlacements.OAK_CHECKED;					
+					PlacedFeature oak = TreePlacements.OAK_CHECKED.value();
 					oak.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;
 				case BigTree:
-					PlacedFeature fancy_oak = TreePlacements.FANCY_OAK_CHECKED;
+					PlacedFeature fancy_oak = TreePlacements.FANCY_OAK_CHECKED.value();
 					fancy_oak.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;
 				case Forest:
 				case Birch:
-					PlacedFeature birch = TreePlacements.BIRCH_CHECKED;
+					PlacedFeature birch = TreePlacements.BIRCH_CHECKED.value();
 					birch.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;
 				case TallBirch:
-					PlacedFeature tall_birch = TreePlacements.SUPER_BIRCH_BEES_0002;
+					PlacedFeature tall_birch = TreePlacements.SUPER_BIRCH_BEES_0002.value();
 					tall_birch.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;
 				case HugeMushroom:
 					if (rand.nextBoolean())
 					{
-						ConfiguredFeature<?, ?> huge_brown_mushroom = TreeFeatures.HUGE_BROWN_MUSHROOM;
+						ConfiguredFeature<?, ?> huge_brown_mushroom = TreeFeatures.HUGE_BROWN_MUSHROOM.value();
 						huge_brown_mushroom.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					} else {
-						ConfiguredFeature<?, ?> huge_red_mushroom = TreeFeatures.HUGE_RED_MUSHROOM;
+						ConfiguredFeature<?, ?> huge_red_mushroom = TreeFeatures.HUGE_RED_MUSHROOM.value();
 						huge_red_mushroom.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					}
 					return true;
 				case HugeRedMushroom:
-					ConfiguredFeature<?, ?> huge_red_mushroom = TreeFeatures.HUGE_RED_MUSHROOM;
+					ConfiguredFeature<?, ?> huge_red_mushroom = TreeFeatures.HUGE_RED_MUSHROOM.value();
 					huge_red_mushroom.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;
 				case HugeBrownMushroom:
-					ConfiguredFeature<?, ?> huge_brown_mushroom = TreeFeatures.HUGE_BROWN_MUSHROOM;
+					ConfiguredFeature<?, ?> huge_brown_mushroom = TreeFeatures.HUGE_BROWN_MUSHROOM.value();
 					huge_brown_mushroom.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;
 				case SwampTree:
-					ConfiguredFeature<TreeConfiguration, ?> swamp_tree = TreeFeatures.SWAMP_OAK;
+					ConfiguredFeature<TreeConfiguration, ?> swamp_tree = TreeFeatures.SWAMP_OAK.value();
 					swamp_tree.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;
 				case Taiga1:
-					PlacedFeature pine = TreePlacements.PINE_CHECKED;
+					PlacedFeature pine = TreePlacements.PINE_CHECKED.value();
 					pine.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;
 				case Taiga2:
-					PlacedFeature spruce = TreePlacements.SPRUCE_CHECKED;
+					PlacedFeature spruce = TreePlacements.SPRUCE_CHECKED.value();
 					spruce.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;
 				case JungleTree:
 					// TODO: Apparently there's another jungle tree (non-mega)
-					PlacedFeature mega_jungle_tree = TreePlacements.MEGA_JUNGLE_TREE_CHECKED;
+					PlacedFeature mega_jungle_tree = TreePlacements.MEGA_JUNGLE_TREE_CHECKED.value();
 					mega_jungle_tree.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;
 				case CocoaTree:
-					PlacedFeature jungle_tree = TreePlacements.JUNGLE_TREE_CHECKED;
+					PlacedFeature jungle_tree = TreePlacements.JUNGLE_TREE_CHECKED.value();
 					jungle_tree.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;
 				case GroundBush:
-					PlacedFeature jungle_bush = TreePlacements.JUNGLE_BUSH;
+					PlacedFeature jungle_bush = TreePlacements.JUNGLE_BUSH.value();
 					jungle_bush.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;
 				case Acacia:
-					PlacedFeature acacia = TreePlacements.ACACIA_CHECKED;
+					PlacedFeature acacia = TreePlacements.ACACIA_CHECKED.value();
 					acacia.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;
 				case DarkOak:
-					PlacedFeature dark_oak = TreePlacements.DARK_OAK_CHECKED;
+					PlacedFeature dark_oak = TreePlacements.DARK_OAK_CHECKED.value();
 					dark_oak.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;
 				case HugeTaiga1:
-					PlacedFeature mega_pine = TreePlacements.MEGA_PINE_CHECKED;
+					PlacedFeature mega_pine = TreePlacements.MEGA_PINE_CHECKED.value();
 					mega_pine.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;
 				case HugeTaiga2:
-					PlacedFeature mega_spruce = TreePlacements.MEGA_SPRUCE_CHECKED;
+					PlacedFeature mega_spruce = TreePlacements.MEGA_SPRUCE_CHECKED.value();
 					mega_spruce.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;
 				case CrimsonFungi:
-					PlacedFeature crimson_fungi = NetherPlacements.CRIMSON_FOREST_VEGETATION;
+					PlacedFeature crimson_fungi = NetherPlacements.CRIMSON_FOREST_VEGETATION.value();
 					crimson_fungi.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;
 				case WarpedFungi:
-					PlacedFeature warped_fungi = NetherPlacements.WARPED_FOREST_VEGETATION;
+					PlacedFeature warped_fungi = NetherPlacements.WARPED_FOREST_VEGETATION.value();
 					warped_fungi.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;
 				case ChorusPlant:
-					PlacedFeature chorus_plant = EndPlacements.CHORUS_PLANT;
+					PlacedFeature chorus_plant = EndPlacements.CHORUS_PLANT.value();
 					chorus_plant.place(this.worldGenRegion, this.chunkGenerator, rand, blockPos);
 					return true;					
 				default:
@@ -762,7 +763,7 @@ public class ForgeWorldGenRegion extends LocalWorldGenRegion
 	@Override
 	public void placeDungeon(Random random, int x, int y, int z)
 	{
-		Feature.MONSTER_ROOM.configured(FeatureConfiguration.NONE).place(this.worldGenRegion, this.chunkGenerator, random, new BlockPos(x, y, z));
+		CaveFeatures.MONSTER_ROOM.value().place(this.worldGenRegion, this.chunkGenerator, random, new BlockPos(x, y, z));
 	}
 
 	@Override
@@ -770,9 +771,9 @@ public class ForgeWorldGenRegion extends LocalWorldGenRegion
 	{
 		if(y >= 0)
 		{
-			CavePlacements.FOSSIL_UPPER.place(this.worldGenRegion, this.chunkGenerator, random, new BlockPos(x, y, z));
+			CavePlacements.FOSSIL_UPPER.value().place(this.worldGenRegion, this.chunkGenerator, random, new BlockPos(x, y, z));
 		} else {
-			CavePlacements.FOSSIL_LOWER.place(this.worldGenRegion, this.chunkGenerator, random, new BlockPos(x, y, z));
+			CavePlacements.FOSSIL_LOWER.value().place(this.worldGenRegion, this.chunkGenerator, random, new BlockPos(x, y, z));
 		}
 	}
 	

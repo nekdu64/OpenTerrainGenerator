@@ -166,7 +166,6 @@ public class BO3RandomBlockFunction extends BO3BlockFunction
 						}
 					}
 
-					// Code that converts legacy block ids inside chests - Frank
 					metaDataNames[blockCount] = args.get(i);
 					metaDataTags[blockCount] = metaData;
 				}

@@ -897,130 +897,6 @@ public final class OTGNoiseChunkGenerator extends ChunkGenerator
 		*/
 	}
 
-	// Decoration
-
-	// Does decoration for a given pos/chunk
-	/*
-	@Override
-	@SuppressWarnings("deprecation")	
-	public void applyBiomeDecoration(WorldGenRegion worldGenRegion, StructureFeatureManager structureManager)
-	{
-		if(!OTG.getEngine().getPluginConfig().getDecorationEnabled())
-		{
-			return;
-		}
-		
-		// Do OTG resource decoration, then MC decoration for any non-OTG resources registered to this biome, then snow.
-		
-		// Taken from vanilla
-		int worldX = worldGenRegion.getCenter().x * Constants.CHUNK_SIZE;
-		int worldZ = worldGenRegion.getCenter().z * Constants.CHUNK_SIZE;
-		BlockPos blockpos = new BlockPos(worldX, 0, worldZ);
-		WorldgenRandom sharedseedrandom = new WorldgenRandom(new LegacyRandomSource(RandomSupport.seedUniquifier()));
-		long decorationSeed = sharedseedrandom.setDecorationSeed(worldGenRegion.getSeed(), worldX, worldZ);	
-		//
-
-		ChunkCoordinate chunkBeingDecorated = ChunkCoordinate.fromBlockCoords(worldX, worldZ);
-		ForgeWorldGenRegion forgeWorldGenRegion = new ForgeWorldGenRegion(this.preset.getFolderName(), this.preset.getWorldConfig(), (WorldGenRegion)worldGenRegion, this);
-		IBiome biome = this.internalGenerator.getCachedBiomeProvider().getNoiseBiome((worldGenRegion.getCenter().x << 2) + 2, (worldGenRegion.getCenter().z << 2) + 2);
-		IBiome biome1 = this.internalGenerator.getCachedBiomeProvider().getNoiseBiome((worldGenRegion.getCenter().x << 2), (worldGenRegion.getCenter().z << 2));
-		IBiome biome2 = this.internalGenerator.getCachedBiomeProvider().getNoiseBiome((worldGenRegion.getCenter().x << 2), (worldGenRegion.getCenter().z << 2) + 4);
-		IBiome biome3 = this.internalGenerator.getCachedBiomeProvider().getNoiseBiome((worldGenRegion.getCenter().x << 2) + 4, (worldGenRegion.getCenter().z << 2));
-		IBiome biome4 = this.internalGenerator.getCachedBiomeProvider().getNoiseBiome((worldGenRegion.getCenter().x << 2) + 4, (worldGenRegion.getCenter().z << 2) + 4);
-		// World save folder name may not be identical to level name, fetch it.
-		Path worldSaveFolder = worldGenRegion.getLevel().getServer().getWorldPath(LevelResource.PLAYER_DATA_DIR).getParent();
-
-		// Get most common biome in chunk and use that for decoration - Frank
-		if (!getPreset().getWorldConfig().improvedBorderDecoration())
-		{
-			List<IBiome> biomes = new ArrayList<IBiome>();
-			biomes.add(biome);
-			biomes.add(biome1);
-			biomes.add(biome2);
-			biomes.add(biome3);
-			biomes.add(biome4);
-			
-			Map<IBiome, Integer> map = new HashMap<>();
-			for (IBiome b : biomes)
-			{
-				Integer val = map.get(b);
-				map.put(b, val == null ? 1 : val + 1);
-			}
-
-			Map.Entry<IBiome, Integer> max = null;
-			for (Map.Entry<IBiome, Integer> ent : map.entrySet())
-			{
-				if (max == null || ent.getValue() > max.getValue())
-				{
-					max = ent;
-				}
-			}
-
-			biome = max.getKey();
-		}
-
-		try
-		{
-			//
-			// Here's how the code works that was added for the ImprovedBorderDecoration code.
-			// - List of biome ids is initialized, will be used to ensure biomes are not populated twice.
-			// - Placement is done for the main biome
-			// - If ImprovedBorderDecoration is true, will attempt to perform decoration from any biomes that have not
-			// already been decorated. Thus preventing decoration from happening twice.
-			//
-			// - Frank
-			//
-			List<Integer> alreadyDecorated = new ArrayList<>();
-			this.chunkDecorator.decorate(this.preset.getFolderName(), chunkBeingDecorated, forgeWorldGenRegion, biome.getBiomeConfig(), getStructureCache(worldSaveFolder));
-			((ForgeBiome)biome).getBiomeBase().generate(structureManager, this, worldGenRegion, decorationSeed, sharedseedrandom, blockpos);
-			alreadyDecorated.add(biome.getBiomeConfig().getOTGBiomeId());
-			// Attempt to decorate other biomes if ImprovedBiomeDecoration - Frank
-			if (getPreset().getWorldConfig().improvedBorderDecoration())
-			{
-				if (!alreadyDecorated.contains(biome1.getBiomeConfig().getOTGBiomeId()))
-				{
-					this.chunkDecorator.decorate(this.preset.getFolderName(), chunkBeingDecorated, forgeWorldGenRegion, biome1.getBiomeConfig(), getStructureCache(worldSaveFolder));
-					((ForgeBiome)biome1).getBiomeBase().generate(structureManager, this, worldGenRegion, decorationSeed, sharedseedrandom, blockpos);
-					alreadyDecorated.add(biome1.getBiomeConfig().getOTGBiomeId());										
-				}
-				if (!alreadyDecorated.contains(biome2.getBiomeConfig().getOTGBiomeId()))
-				{
-					this.chunkDecorator.decorate(this.preset.getFolderName(), chunkBeingDecorated, forgeWorldGenRegion, biome2.getBiomeConfig(), getStructureCache(worldSaveFolder));
-					((ForgeBiome)biome2).getBiomeBase().generate(structureManager, this, worldGenRegion, decorationSeed, sharedseedrandom, blockpos);
-					alreadyDecorated.add(biome2.getBiomeConfig().getOTGBiomeId());					
-				}
-				if (!alreadyDecorated.contains(biome3.getBiomeConfig().getOTGBiomeId()))
-				{
-					this.chunkDecorator.decorate(this.preset.getFolderName(), chunkBeingDecorated, forgeWorldGenRegion, biome3.getBiomeConfig(), getStructureCache(worldSaveFolder));
-					((ForgeBiome)biome3).getBiomeBase().generate(structureManager, this, worldGenRegion, decorationSeed, sharedseedrandom, blockpos);
-					alreadyDecorated.add(biome3.getBiomeConfig().getOTGBiomeId());					
-				}
-				if (!alreadyDecorated.contains(biome4.getBiomeConfig().getOTGBiomeId()))
-				{
-					this.chunkDecorator.decorate(this.preset.getFolderName(), chunkBeingDecorated, forgeWorldGenRegion, biome4.getBiomeConfig(), getStructureCache(worldSaveFolder));
-					((ForgeBiome)biome4).getBiomeBase().generate(structureManager, this, worldGenRegion, decorationSeed, sharedseedrandom, blockpos);
-				}
-			}
-			// Template biomes handle their own snow, OTG biomes use OTG snow.
-			// TODO: Snow is handled per chunk, so this may cause some artifacts on biome borders.
-			if(
-				!biome.getBiomeConfig().getIsTemplateForBiome() ||
-				!biome1.getBiomeConfig().getIsTemplateForBiome() ||
-				!biome2.getBiomeConfig().getIsTemplateForBiome() ||
-				!biome3.getBiomeConfig().getIsTemplateForBiome() ||				
-				!biome4.getBiomeConfig().getIsTemplateForBiome()
-			)
-			{
-				this.chunkDecorator.doSnowAndIce(forgeWorldGenRegion, chunkBeingDecorated);
-			}
-		} catch (Exception exception) {
-			CrashReport crashreport = CrashReport.forThrowable(exception, "Biome decoration");
-			crashreport.addCategory("Generation").setDetail("CenterX", worldX).setDetail("CenterZ", worldZ).setDetail("Seed", decorationSeed);
-			throw new ReportedException(crashreport);
-		}
-	}
-	*/
-
 	@Override
 	public void applyBiomeDecoration(WorldGenLevel worldGenLevel, ChunkAccess p_187713_, StructureFeatureManager p_187714_)
 	{
@@ -1046,86 +922,13 @@ public final class OTGNoiseChunkGenerator extends ChunkGenerator
 			int worldZ =worldGenRegion.getCenter().z * Constants.CHUNK_SIZE;
 			ChunkCoordinate chunkBeingDecorated = ChunkCoordinate.fromBlockCoords(worldX, worldZ);
 			IBiome biome = this.internalGenerator.getCachedBiomeProvider().getNoiseBiome((worldGenRegion.getCenter().x << 2) + 2, (worldGenRegion.getCenter().z << 2) + 2);
-			IBiome biome1 = this.internalGenerator.getCachedBiomeProvider().getNoiseBiome((worldGenRegion.getCenter().x << 2), (worldGenRegion.getCenter().z << 2));
-			IBiome biome2 = this.internalGenerator.getCachedBiomeProvider().getNoiseBiome((worldGenRegion.getCenter().x << 2), (worldGenRegion.getCenter().z << 2) + 4);
-			IBiome biome3 = this.internalGenerator.getCachedBiomeProvider().getNoiseBiome((worldGenRegion.getCenter().x << 2) + 4, (worldGenRegion.getCenter().z << 2));
-			IBiome biome4 = this.internalGenerator.getCachedBiomeProvider().getNoiseBiome((worldGenRegion.getCenter().x << 2) + 4, (worldGenRegion.getCenter().z << 2) + 4);
 			IBiomeConfig biomeConfig = biome.getBiomeConfig();
 			ForgeWorldGenRegion forgeWorldGenRegion = new ForgeWorldGenRegion(this.preset.getFolderName(), this.preset.getWorldConfig(), worldGenRegion, this);
 			// World save folder name may not be identical to level name, fetch it.
 			Path worldSaveFolder = worldGenRegion.getLevel().getServer().getWorldPath(LevelResource.PLAYER_DATA_DIR).getParent();
-			if (!getPreset().getWorldConfig().improvedBorderDecoration()) {
-				List<IBiome> biomes = new ArrayList<IBiome>();
-
-				biomes.add(biome);
-				biomes.add(biome1);
-				biomes.add(biome2);
-				biomes.add(biome3);
-				biomes.add(biome4);
-
-				Map<IBiome, Integer> map1 = new HashMap<>();
-				for (IBiome b : biomes)
-				{
-					Integer val = map1.get(b);
-					map1.put(b, val == null ? 1 : val + 1);
-				}
-
-				Map.Entry<IBiome, Integer> max = null;
-				for (Map.Entry<IBiome, Integer> ent : map1.entrySet())
-				{
-					if (max == null || ent.getValue() > max.getValue())
-					{
-						max = ent;
-					}
-				}
-
-				biome = max.getKey();
-			}
 
 			try {
-				/*
-				 * Here's how the code works that was added for the ImprovedBorderDecoration code.
-				 * - List of biome ids is initialized, will be used to ensure biomes are not populated twice.
-				 * - Placement is done for the main biome
-				 * - If ImprovedBorderDecoration is true, will attempt to perform decoration from any biomes that have not
-				 * already been decorated. Thus preventing decoration from happening twice.
-				 *
-				 * Another note for 1.18+:
-				 * I commented out the generators for the vanilla resources, as
-				 * defaults to improved
-				 *
-				 * - Frank
-				 */
-				List<Integer> alreadyDecorated = new ArrayList<>();
 				this.chunkDecorator.decorate(this.preset.getFolderName(), chunkBeingDecorated, forgeWorldGenRegion, biome.getBiomeConfig(), getStructureCache(worldSaveFolder));
-				alreadyDecorated.add(biome.getBiomeConfig().getOTGBiomeId());
-				// Attempt to decorate other biomes if ImprovedBiomeDecoration - Frank
-				if (getPreset().getWorldConfig().improvedBorderDecoration())
-				{
-					if (!alreadyDecorated.contains(biome1.getBiomeConfig().getOTGBiomeId()))
-					{
-						this.chunkDecorator.decorate(this.preset.getFolderName(), chunkBeingDecorated, forgeWorldGenRegion, biome1.getBiomeConfig(), getStructureCache(worldSaveFolder));
-						//((PaperBiome) biome1).getBiome().generate(structureManager, this, worldGenRegion, decorationSeed, sharedseedrandom, blockpos);
-						alreadyDecorated.add(biome1.getBiomeConfig().getOTGBiomeId());
-					}
-					if (!alreadyDecorated.contains(biome2.getBiomeConfig().getOTGBiomeId()))
-					{
-						this.chunkDecorator.decorate(this.preset.getFolderName(), chunkBeingDecorated, forgeWorldGenRegion, biome2.getBiomeConfig(), getStructureCache(worldSaveFolder));
-						//((PaperBiome) biome2).getBiome().generate(structureManager, this, worldGenRegion, decorationSeed, sharedseedrandom, blockpos);
-						alreadyDecorated.add(biome2.getBiomeConfig().getOTGBiomeId());
-					}
-					if (!alreadyDecorated.contains(biome3.getBiomeConfig().getOTGBiomeId()))
-					{
-						this.chunkDecorator.decorate(this.preset.getFolderName(), chunkBeingDecorated, forgeWorldGenRegion, biome3.getBiomeConfig(), getStructureCache(worldSaveFolder));
-						//((PaperBiome) biome3).getBiome().generate(structureManager, this, worldGenRegion, decorationSeed, sharedseedrandom, blockpos);
-						alreadyDecorated.add(biome3.getBiomeConfig().getOTGBiomeId());
-					}
-					if (!alreadyDecorated.contains(biome4.getBiomeConfig().getOTGBiomeId()))
-					{
-						this.chunkDecorator.decorate(this.preset.getFolderName(), chunkBeingDecorated, forgeWorldGenRegion, biome4.getBiomeConfig(), getStructureCache(worldSaveFolder));
-						//((PaperBiome) biome4).getBiome().generate(structureManager, this, worldGenRegion, decorationSeed, sharedseedrandom, blockpos);
-					}
-				}
 			}
 			catch (Exception exception)
 			{
@@ -1133,9 +936,6 @@ public final class OTGNoiseChunkGenerator extends ChunkGenerator
 				crashreport.addCategory("Generation").setDetail("CenterX", worldX).setDetail("CenterZ", worldZ).setDetail("Seed", seed);
 				throw new ReportedException(crashreport);
 			}
-
-			// This line has been moved up - Frank
-			//this.chunkDecorator.decorate(this.preset.getFolderName(), chunkBeingDecorated, forgeWorldGenRegion, biome.getBiomeConfig(), getStructureCache(worldSaveFolder));
 
 			Set<Biome> set = new ObjectArraySet<>();
 			//if (this instanceof FlatLevelSource)

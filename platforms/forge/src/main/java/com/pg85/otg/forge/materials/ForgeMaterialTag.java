@@ -10,8 +10,30 @@ import net.minecraft.tags.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.ResourceLocationException;
 
+import java.lang.reflect.Field;
+import java.util.*;
+
 public class ForgeMaterialTag extends LocalMaterialTag
 {
+	private static Map<ResourceLocation, TagKey<Block>> VANILLA_TAGS = new HashMap<>();
+
+	static {
+		for (Field f : BlockTags.class.getDeclaredFields())
+		{
+			try
+			{
+				TagKey<Block> o = (TagKey<Block>) f.get(null);
+
+				VANILLA_TAGS.put(o.location(), o);
+
+			} catch (IllegalAccessException e)
+			{
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
+
 	public static LocalMaterialTag ofString(String name)
 	{ 
 		// If otg: or no domain was supplied, try OTG tags.
@@ -24,7 +46,7 @@ public class ForgeMaterialTag extends LocalMaterialTag
 			try
 			{
 				otgResourceLocation = new ResourceLocation(Constants.MOD_ID_SHORT + ":" + name.trim().toLowerCase().replace(Constants.MOD_ID_SHORT + ":", ""));
-				optTag = BlockTags.getAllTags().getTag(otgResourceLocation);
+				optTag = VANILLA_TAGS.get(otgResourceLocation);
 				if(optTag != null)
 				{
 					return new ForgeMaterialTag(optTag, otgResourceLocation.toString());
@@ -36,7 +58,7 @@ public class ForgeMaterialTag extends LocalMaterialTag
 		try
 		{
 			resourceLocation = new ResourceLocation(name.trim().toLowerCase());
-			optTag = BlockTags.getAllTags().getTag(resourceLocation);
+			optTag = VANILLA_TAGS.get(resourceLocation);
 			if(optTag != null)
 			{
 				return new ForgeMaterialTag(optTag, resourceLocation.toString());

@@ -258,7 +258,9 @@ public class PaperBiome implements IBiome
 
 		// Villages
 		// TODO: Allow spawning multiple types in a single biome?
-		// Cutting this out for the time being - Frank
+
+		// FIXME: need to add to per-world structure sets?
+
 		/*if (worldConfig.getVillagesEnabled() && biomeConfig.getVillageType() != SettingsEnums.VillageType.disabled)
 		{
 			int villageSize = biomeConfig.getVillageSize();
@@ -493,8 +495,6 @@ public class PaperBiome implements IBiome
 		addMobGroup(MobCategory.WATER_AMBIENT, mobSpawnInfoBuilder, biomeConfig.getSpawnList(EntityCategory.WATER_AMBIENT), biomeConfig.getName());
 		addMobGroup(MobCategory.MISC, mobSpawnInfoBuilder, biomeConfig.getSpawnList(EntityCategory.MISC), biomeConfig.getName());
 
-		// This functionality must've been removed? - Frank
-		//mobSpawnInfoBuilder.setPlayerCanSpawn();
 		return mobSpawnInfoBuilder;
 	}
 

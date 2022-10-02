@@ -532,43 +532,6 @@ public class OTGNoiseChunkGenerator extends ChunkGenerator
 	@Override
 	public WeightedRandomList<MobSpawnSettings.SpawnerData> getMobsAt(Holder<Biome> biome, StructureFeatureManager structureManager, MobCategory entityClassification, BlockPos blockPos)
 	{
-		/*if (structureManager.getStructureAt(blockPos, StructureFeature.SWAMP_HUT).isValid())
-		{
-			if (entityClassification == MobCategory.MONSTER)
-			{
-				return StructureFeature.SWAMP_HUT.getSpecialEnemies();
-			}
-
-			if (entityClassification == MobCategory.CREATURE)
-			{
-				return StructureFeature.SWAMP_HUT.getSpecialAnimals();
-			}
-		}
-
-		if (entityClassification == MobCategory.MONSTER)
-		{
-			if (structureManager.getStructureAt(blockPos, false, StructureFeature.PILLAGER_OUTPOST).isValid())
-			{
-				return StructureFeature.PILLAGER_OUTPOST.getSpecialEnemies();
-			}
-
-			if (structureManager.getStructureAt(blockPos, false, StructureFeature.OCEAN_MONUMENT).isValid())
-			{
-				return StructureFeature.OCEAN_MONUMENT.getSpecialEnemies();
-			}
-
-			if (structureManager.getStructureAt(blockPos, true, StructureFeature.NETHER_BRIDGE).isValid())
-			{
-				return StructureFeature.NETHER_BRIDGE.getSpecialEnemies();
-			}
-		}
-
-		return entityClassification == MobCategory.UNDERGROUND_WATER_CREATURE && structureManager.getStructureAt(blockPos, false, StructureFeature.OCEAN_MONUMENT).isValid() ? StructureFeature.OCEAN_MONUMENT.getSpecialUndergroundWaterAnimals() : */
-		/*
-		* Judging by the fact that the methods were removed,
-		* I believe the below method will work regardless of structure.
-		* - Frank
-		 */
 		return super.getMobsAt(biome, structureManager, entityClassification, blockPos);
 	}
 
