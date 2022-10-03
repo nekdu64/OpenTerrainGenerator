@@ -1,10 +1,6 @@
 package com.pg85.otg.core.config.biome;
 
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.pg85.otg.config.ConfigFile;
 import com.pg85.otg.config.ConfigFunction;
@@ -31,17 +27,18 @@ import com.pg85.otg.util.biome.ReplaceBlockMatrix;
 import com.pg85.otg.util.biome.WeightedMobSpawnGroup;
 import com.pg85.otg.util.gen.ChunkBuffer;
 import com.pg85.otg.util.gen.GeneratingChunk;
+import com.pg85.otg.util.helpers.MathHelper;
 import com.pg85.otg.util.materials.LocalMaterialData;
 import com.pg85.otg.util.minecraft.EntityCategory;
 import com.pg85.otg.util.minecraft.SaplingType;
 
 /**
  * BiomeConfig (*.bc) classes
- * 
+ * <p>
  * IBiomeConfig defines anything that's used/exposed between projects.
  * BiomeConfigBase implements anything needed for IBiomeConfig. 
  * BiomeConfig contains only fields/methods used for io/serialisation/instantiation.
- * 
+ * <p>
  * BiomeConfig should be used only in common-core and platform-specific layers, when reading/writing settings on app start.
  * IBiomeConfig should be used wherever settings are used in code. 
  */
@@ -53,8 +50,8 @@ abstract class BiomeConfigBase extends ConfigFile implements IBiomeConfig
 	// Settings container, used so we can copy a biomeconfig while 
 	// changing only its id and registry key, used for non-otg 
 	// biomes in otg worlds.
-	protected SettingsContainer settings = new SettingsContainer();	
-	class SettingsContainer
+	protected SettingsContainer settings = new SettingsContainer();
+	static class SettingsContainer
 	{
 		// Misc
 		protected boolean replacedBlocksInited = false;
@@ -112,6 +109,8 @@ abstract class BiomeConfigBase extends ConfigFile implements IBiomeConfig
 		protected LocalMaterialData underWaterSurfaceBlock;
 		protected LocalMaterialData groundBlock;
 		protected LocalMaterialData deepslateBlock;
+		protected int deepslateStartY;
+		protected int deepslateFuzzy;
 		protected LocalMaterialData sandStoneBlock;
 		protected LocalMaterialData redSandStoneBlock;
 		protected SurfaceGenerator surfaceAndGroundControl;
@@ -273,6 +272,7 @@ abstract class BiomeConfigBase extends ConfigFile implements IBiomeConfig
 		return this.settings.deepslateBlock;
 	}
 
+
 	@Override
 	public LocalMaterialData getDefaultWaterBlock()
 	{
@@ -301,7 +301,8 @@ abstract class BiomeConfigBase extends ConfigFile implements IBiomeConfig
 						this.settings.underWaterSurfaceBlock,
 						this.settings.worldConfig.getDefaultBedrockBlock(),
 						this.settings.sandStoneBlock,
-						this.settings.redSandStoneBlock
+						this.settings.redSandStoneBlock,
+						this.settings.deepslateBlock
 					);
 				}
 				this.settings.replacedBlocksInited = true;
@@ -341,7 +342,40 @@ abstract class BiomeConfigBase extends ConfigFile implements IBiomeConfig
 		}
 		return this.settings.groundBlock;
 	}
-	
+
+	@Override
+	public LocalMaterialData getDeepslateBlockReplaced(int y)
+	{
+		if (getReplaceBlocks().replacesDeepslate)
+		{
+			return this.settings.deepslateBlock.parseWithBiomeAndHeight(this.settings.worldConfig.getBiomeConfigsHaveReplacement(), getReplaceBlocks(), y);
+		}
+		return this.settings.deepslateBlock;
+	}
+
+	@Override
+	public LocalMaterialData getStoneOrDeepslateReplaced(int y, Random random)
+	{
+		if (y <= settings.deepslateStartY) {
+			return this.getDeepslateBlockReplaced(y);
+		} else if (y >= settings.deepslateFuzzy) {
+			return this.getStoneBlockReplaced(y);
+		} else {
+			double d = MathHelper.lerp(MathHelper.inverseLerp(y, settings.deepslateStartY, settings.deepslateFuzzy), 1.0, 0.0);
+			return (double)random.nextFloat() < d ? this.getDeepslateBlockReplaced(y) : this.getStoneBlockReplaced(y);
+		}
+	}
+
+	@Override
+	public int getDeepslateFuzzy() {
+		return this.settings.deepslateFuzzy;
+	}
+
+	@Override
+	public int getDeepslateStartY() {
+		return this.settings.deepslateStartY;
+	}
+
 	@Override
 	public LocalMaterialData getStoneBlockReplaced(int y)
 	{
@@ -1012,14 +1046,14 @@ abstract class BiomeConfigBase extends ConfigFile implements IBiomeConfig
 	/**
 	 * This is a pretty weak map from -0.5 to ~-0.8 (min vanilla temperature)
 	 *
-	 * TODO: We should probably make this more configurable in the future?
-	 *
 	 * @param temp The temp to get snow height for
 	 * @return A value from 0 to 7 to be used for snow height
 	 */
 	@Override
 	public int getSnowHeight(float temp)
 	{
+		// TODO: We should probably make this more configurable in the future?
+
 		// OTG biome temperature is between 0.0 and 2.0.
 		// Judging by WorldStandardValues.SNOW_AND_ICE_MAX_TEMP, snow should appear below 0.15.
 		// According to the configs, snow and ice should appear between 0.2 (at y > 90) and 0.1 (entire biome covered in ice).
@@ -1044,9 +1078,9 @@ abstract class BiomeConfigBase extends ConfigFile implements IBiomeConfig
 	}
 	
 	@Override
-	public void doSurfaceAndGroundControl(long worldSeed, GeneratingChunk generatingChunk, ChunkBuffer chunkBuffer, int x, int z, IBiome biome)
+	public void doSurfaceAndGroundControl(long worldSeed, GeneratingChunk generatingChunk, ChunkBuffer chunkBuffer, int x, int z, int maxY, IBiome biome)
 	{
-		this.settings.surfaceAndGroundControl.spawn(worldSeed, generatingChunk, chunkBuffer, biome, x, z);
+		this.settings.surfaceAndGroundControl.spawn(worldSeed, generatingChunk, chunkBuffer, biome, x, z, maxY);
 	}
 	
 	@Override

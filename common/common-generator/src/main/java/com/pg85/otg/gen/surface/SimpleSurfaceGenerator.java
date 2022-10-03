@@ -24,13 +24,13 @@ public class SimpleSurfaceGenerator implements SurfaceGenerator
 	}
 	
 	@Override
-	public void spawn(long worldSeed, GeneratingChunk generatingChunk, ChunkBuffer chunkBuffer, IBiome biome, int xInWorld, int zInWorld)
+	public void spawn(long worldSeed, GeneratingChunk generatingChunk, ChunkBuffer chunkBuffer, IBiome biome, int xInWorld, int zInWorld, int minY)
 	{
-		spawnColumn(worldSeed, null, generatingChunk, chunkBuffer, biome, xInWorld, zInWorld);
+		spawnColumn(worldSeed, null, generatingChunk, chunkBuffer, biome, xInWorld, zInWorld, minY);
 	}
 
 	// net.minecraft.world.biome.Biome.generateBiomeTerrain
-	protected void spawnColumn(long worldSeed, MultipleLayersSurfaceGeneratorLayer layer, GeneratingChunk generatingChunk, ChunkBuffer chunkBuffer, IBiome biome, int xInWorld, int zInWorld)
+	protected void spawnColumn(long worldSeed, MultipleLayersSurfaceGeneratorLayer layer, GeneratingChunk generatingChunk, ChunkBuffer chunkBuffer, IBiome biome, int xInWorld, int zInWorld, int minY)
 	{
 		int internalX = xInWorld & 0xf;
 		int internalZ = zInWorld & 0xf;
@@ -42,7 +42,7 @@ public class SimpleSurfaceGenerator implements SurfaceGenerator
 		if (biomeConfig.isCeilingBedrock())
 		{
 			// Moved one block lower to fix lighting issues
-			chunkBuffer.setBlock(internalX, generatingChunk.heightCap - 2, internalZ, biomeConfig.getBedrockBlockReplaced(generatingChunk.heightCap - 2));
+			chunkBuffer.setBlock(internalX, generatingChunk.maxY - 2, internalZ, biomeConfig.getBedrockBlockReplaced(generatingChunk.maxY - 2));
 		}
 
 		// Traverse down the block column to place bedrock, ground and surface blocks
@@ -63,7 +63,7 @@ public class SimpleSurfaceGenerator implements SurfaceGenerator
 		LocalMaterialData blockOnPreviousPos = null;
 		
 		int highestBlockInColumn = chunkBuffer.getHighestBlockForColumn(internalX, internalZ);
-		for (int y = highestBlockInColumn; y >= -64; y--)
+		for (int y = highestBlockInColumn; y >= minY; y--)
 		{
 			if (generatingChunk.mustCreateBedrockAt(biomeConfig.isFlatBedrock(), biomeConfig.isBedrockDisabled(), biomeConfig.isCeilingBedrock(), y))
 			{
@@ -98,7 +98,7 @@ public class SimpleSurfaceGenerator implements SurfaceGenerator
 						groundLayerDepth = biomeBlocksNoise;
 						
 						// Set when variable was reset
-						if (biomeBlocksNoise <= -64 && !biomeConfig.isRemoveSurfaceStone())
+						if (biomeBlocksNoise <= 0 && !biomeConfig.isRemoveSurfaceStone())
 						{
 							useAirForSurface = true;
 							useIceForSurface = false;
@@ -227,12 +227,11 @@ public class SimpleSurfaceGenerator implements SurfaceGenerator
 							// mostly flat terrain, while hills have only a 1 block layer of sand and more sandstone.
 
 							if (
-								groundLayerDepth == 0 &&
-								biomeBlocksNoise > 1 &&
+								groundLayerDepth == 0 && biomeBlocksNoise > 1 &&
 								(layerGroundBlockIsSand || (layer == null && biomeGroundBlockIsSand))
 							)
 							{
-								groundLayerDepth = generatingChunk.random.nextInt(4) + Math.max(-64, y - currentWaterLevel);
+								groundLayerDepth = generatingChunk.random.nextInt(4) + Math.max(minY, y - currentWaterLevel);
 								useSandStoneForGround = true;
 							}
 						} 

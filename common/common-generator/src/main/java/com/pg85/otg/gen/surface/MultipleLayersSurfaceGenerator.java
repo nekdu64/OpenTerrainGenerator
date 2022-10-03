@@ -19,8 +19,6 @@ class MultipleLayersSurfaceGenerator extends SimpleSurfaceGenerator
 	// Must be sorted based on the noise field
 	protected List<MultipleLayersSurfaceGeneratorLayer> layers;
 
-	protected MultipleLayersSurfaceGenerator() { }
-	
 	MultipleLayersSurfaceGenerator(String[] args, IMaterialReader materialReader) throws InvalidConfigException
 	{
 		this.layers = new ArrayList<MultipleLayersSurfaceGeneratorLayer>();
@@ -87,7 +85,7 @@ class MultipleLayersSurfaceGenerator extends SimpleSurfaceGenerator
 	}
 
 	@Override
-	public void spawn(long worldSeed, GeneratingChunk generatingChunkInfo, ChunkBuffer chunkBuffer, IBiome biome, int xInWorld, int zInWorld)
+	public void spawn(long worldSeed, GeneratingChunk generatingChunkInfo, ChunkBuffer chunkBuffer, IBiome biome, int xInWorld, int zInWorld, int minY)
 	{
 		int x = xInWorld & 0xf;
 		int z = zInWorld & 0xf;
@@ -98,14 +96,14 @@ class MultipleLayersSurfaceGenerator extends SimpleSurfaceGenerator
 			{
 				if (noise <= layer.maxNoise)
 				{
-					spawnColumn(worldSeed, layer, generatingChunkInfo, chunkBuffer, biome, xInWorld, zInWorld);
+					spawnColumn(worldSeed, layer, generatingChunkInfo, chunkBuffer, biome, xInWorld, zInWorld, minY);
 					return;
 				}
 			}
 		}
 
 		// Fall back on normal column
-		spawnColumn(worldSeed, null, generatingChunkInfo, chunkBuffer, biome, xInWorld, zInWorld);
+		spawnColumn(worldSeed, null, generatingChunkInfo, chunkBuffer, biome, xInWorld, zInWorld, minY);
 	}
 
 	@Override

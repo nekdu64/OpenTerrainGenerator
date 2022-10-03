@@ -24,11 +24,12 @@ public interface SurfaceGenerator
 	 * Spawns this surface layer in the world.
 	 * @param generatingChunk Information about the chunk being generated.
 	 * @param chunkBuffer	 The chunk buffer.
-	 * @param biomeConfig	 The biome config to use for the settings.
-	 * @param xInWorld		X position in the world.
-	 * @param zInWorld		Z position in the world.
+	 * @param biome			 The biome to use for the settings.
+	 * @param xInWorld		 X position in the world.
+	 * @param zInWorld		 Z position in the world.
+	 * @param minY			 The minimum allowed Y value in the world
 	 */
-	void spawn(long worldSeed, GeneratingChunk generatingChunk, ChunkBuffer chunkBuffer, IBiome biome, int xInWorld, int zInWorld);
+	void spawn(long worldSeed, GeneratingChunk generatingChunk, ChunkBuffer chunkBuffer, IBiome biome, int xInWorld, int zInWorld, int minY);
 
 	/**
 	 * Writes the settings used to a string. There must be a constructor to

@@ -2,9 +2,7 @@ package com.pg85.otg.paper.gen;
 
 import java.util.*;
 
-import com.google.common.collect.ImmutableCollection;
 import com.pg85.otg.paper.biome.PaperBiome;
-import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -15,9 +13,7 @@ import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 
-import net.minecraft.world.level.levelgen.structure.BuiltinStructureSets;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
-import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
 import org.bukkit.craftbukkit.v1_18_R2.generator.CraftChunkData;
 
 import com.pg85.otg.constants.Constants;
@@ -37,11 +33,9 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ProtoChunk;
-import net.minecraft.world.level.levelgen.GenerationStep.Decoration;
 import net.minecraft.world.level.levelgen.Heightmap.Types;
 //import net.minecraft.world.level.levelgen.StructureSettings;
 //import net.minecraft.world.level.levelgen.WorldgenRandom;
-import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.level.levelgen.feature.StructureFeature;
 //import net.minecraft.world.level.levelgen.feature.configurations.StructureFeatureConfiguration;
 
@@ -65,6 +59,8 @@ public class ShadowChunkGenerator
 	private final FifoMap<ChunkCoordinate, ChunkAccess> unloadedChunksCache = new FifoMap<ChunkCoordinate, ChunkAccess>(512);
 	private final FifoMap<ChunkCoordinate, Integer> hasVanillaStructureChunkCache = new FifoMap<ChunkCoordinate, Integer>(2048);
 	private final FifoMap<ChunkCoordinate, Integer> hasVanillaNoiseStructureChunkCache = new FifoMap<ChunkCoordinate, Integer>(2048);
+	private final int minY;
+	private final int maxY;
 
 	/*static Field heightMaps;
 	static Field light;
@@ -93,9 +89,12 @@ public class ShadowChunkGenerator
 	@SuppressWarnings("unused")
 	private int cacheMisses = 0;
 
-	public ShadowChunkGenerator() { }
+	public ShadowChunkGenerator(int minY, int maxY) {
+		this.minY = minY;
+		this.maxY = maxY;
+	}
 
-	private PaperChunkBuffer getUnloadedChunk(OTGChunkGenerator otgChunkGenerator, int worldHeightCap, Random random, ChunkCoordinate chunkCoordinate, ServerLevel level)
+	private PaperChunkBuffer getUnloadedChunk(OTGChunkGenerator otgChunkGenerator, Random random, ChunkCoordinate chunkCoordinate, ServerLevel level)
 	{
 		// Make a dummy chunk, we'll fill this with base terrain data ourselves, without touching any MC worldgen logic.
 		// As an optimisation, we cache the dummy chunk in a limited size FIFO cache. Later when MC requests the chunk 
@@ -112,7 +111,7 @@ public class ShadowChunkGenerator
 		ObjectList<JigsawStructureData> structures = new ObjectArrayList<>(10);
 		ObjectList<JigsawStructureData> junctions = new ObjectArrayList<>(32);
 
-		otgChunkGenerator.populateNoise(worldHeightCap, random, buffer, buffer.getChunkCoordinate(), structures, junctions);
+		otgChunkGenerator.populateNoise(random, buffer, buffer.getChunkCoordinate(), structures, junctions);
 		return buffer;
 	}
 
@@ -143,7 +142,7 @@ public class ShadowChunkGenerator
 			for (int z = 0; z < Constants.CHUNK_SIZE; z++)
 			{
 				int endY = cachedChunk.getHeight(Types.WORLD_SURFACE_WG, x, z);
-				for (int y = -64; y <= endY; y++)
+				for (int y = minY; y <= endY; y++)
 				{
 					BlockPos pos = new BlockPos(x, y, z);
 					data.setRegion(x, y, z, x + 1, y + 1, z + 1, cachedChunk.getBlockState(pos));
@@ -165,7 +164,7 @@ public class ShadowChunkGenerator
 			for (int z = 0; z < Constants.CHUNK_SIZE; z++)
 			{
 				int endY = cachedChunk.getOrCreateHeightmapUnprimed(Types.WORLD_SURFACE_WG).getFirstAvailable(x, z);
-				for (int y = 0; y <= endY; y++)
+				for (int y = minY; y <= endY; y++)
 				{
 					BlockPos pos = new BlockPos(x, y, z);
 					chunk.setBlockState(pos, cachedChunk.getBlockState(pos), false);
@@ -359,9 +358,9 @@ public class ShadowChunkGenerator
 	// resources used for worldgen or bo4 shadowgen, since the chunks aren't actually supposed to generate in the world.
 	// We won't get any density based smoothing applied to noisegen for vanilla structures, but that's ok for /otg mapterrain.
 
-	public PaperChunkBuffer getChunkWithoutLoadingOrCaching(OTGChunkGenerator otgChunkGenerator, int worldHeightCap, Random random, ChunkCoordinate chunkCoordinate, ServerLevel level)
+	public PaperChunkBuffer getChunkWithoutLoadingOrCaching(OTGChunkGenerator otgChunkGenerator, Random random, ChunkCoordinate chunkCoordinate, ServerLevel level)
 	{
-		return getUnloadedChunk(otgChunkGenerator, worldHeightCap, random, chunkCoordinate, level);
+		return getUnloadedChunk(otgChunkGenerator, random, chunkCoordinate, level);
 	}
 
 	// BO4's / Smoothing Areas
@@ -369,7 +368,7 @@ public class ShadowChunkGenerator
 	// BO4's and smoothing areas may do material and height checks in unloaded chunks during decoration.
 	// Shadowgen is used to do this without causing cascades. Shadowgenned chunks are requested on-demand for the worldgen thread (BO4's).
 
-	private LocalMaterialData[] getBlockColumnInUnloadedChunk(OTGChunkGenerator otgChunkGenerator, int worldHeightCap, Random worldRandom, int x, int z, ServerLevel level)
+	private LocalMaterialData[] getBlockColumnInUnloadedChunk(OTGChunkGenerator otgChunkGenerator, Random worldRandom, int x, int z, ServerLevel level)
 	{
 		BlockPos2D blockPos = new BlockPos2D(x, z);
 		ChunkCoordinate chunkCoord = ChunkCoordinate.fromBlockCoords(x, z);
@@ -389,7 +388,7 @@ public class ShadowChunkGenerator
 		if (chunk == null)
 		{
 			// Generate a chunk without loading/decorating it
-			chunk = getUnloadedChunk(otgChunkGenerator, worldHeightCap, worldRandom, chunkCoord, level).getChunk();
+			chunk = getUnloadedChunk(otgChunkGenerator, worldRandom, chunkCoord, level).getChunk();
 			this.unloadedChunksCache.put(chunkCoord, chunk);
 		}
 		int totalHeight = otgChunkGenerator.getMaxY() - otgChunkGenerator.getMinY();
@@ -412,17 +411,17 @@ public class ShadowChunkGenerator
 		return blocksInColumn;
 	}
 
-	public LocalMaterialData getMaterialInUnloadedChunk(OTGChunkGenerator otgChunkGenerator, int worldHeightCap, Random worldRandom, int x, int y, int z, ServerLevel level)
+	public LocalMaterialData getMaterialInUnloadedChunk(OTGChunkGenerator otgChunkGenerator, Random worldRandom, int x, int y, int z, ServerLevel level)
 	{
-		LocalMaterialData[] blockColumn = getBlockColumnInUnloadedChunk(otgChunkGenerator, worldHeightCap, worldRandom, x, z, level);
+		LocalMaterialData[] blockColumn = getBlockColumnInUnloadedChunk(otgChunkGenerator, worldRandom, x, z, level);
 		return blockColumn[y];
 	}
 
-	public int getHighestBlockYInUnloadedChunk(OTGChunkGenerator otgChunkGenerator, int worldHeightCap, Random worldRandom, int x, int z, boolean findSolid, boolean findLiquid, boolean ignoreLiquid, boolean ignoreSnow, ServerLevel level)
+	public int getHighestBlockYInUnloadedChunk(OTGChunkGenerator otgChunkGenerator, Random worldRandom, int x, int z, boolean findSolid, boolean findLiquid, boolean ignoreLiquid, boolean ignoreSnow, ServerLevel level)
 	{
 		int height = -1;
 
-		LocalMaterialData[] blockColumn = getBlockColumnInUnloadedChunk(otgChunkGenerator, worldHeightCap, worldRandom, x, z, level);
+		LocalMaterialData[] blockColumn = getBlockColumnInUnloadedChunk(otgChunkGenerator, worldRandom, x, z, level);
 		PaperMaterialData material;
 		boolean isLiquid;
 		boolean isSolid;

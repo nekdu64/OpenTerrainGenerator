@@ -1,6 +1,7 @@
 package com.pg85.otg.interfaces;
 
 import java.util.List;
+import java.util.Random;
 
 import com.pg85.otg.constants.SettingsEnums.GrassColorModifier;
 import com.pg85.otg.constants.SettingsEnums.MineshaftType;
@@ -19,11 +20,11 @@ import com.pg85.otg.util.minecraft.SaplingType;
 
 /**
  * BiomeConfig (*.bc) classes
- * 
+ * <p>
  * IBiomeConfig defines anything that's used/exposed between projects.
  * BiomeConfigBase implements anything needed for IBiomeConfig. 
  * BiomeConfig contains only fields/methods used for io/serialisation/instantiation.
- * 
+ * <p>
  * BiomeConfig should be used only in common-core and platform-specific layers, when reading/writing settings on app start.
  * IBiomeConfig should be used wherever settings are used in code. 
  */
@@ -104,13 +105,17 @@ public interface IBiomeConfig
 	LocalMaterialData getSurfaceBlockReplaced(int y);
 	LocalMaterialData getGroundBlockReplaced(int y);
 	LocalMaterialData getStoneBlockReplaced(int y);
+	LocalMaterialData getDeepslateBlockReplaced(int y);
+	LocalMaterialData getStoneOrDeepslateReplaced(int y, Random random);
 	LocalMaterialData getBedrockBlockReplaced(int y);
 	LocalMaterialData getSandStoneBlockReplaced(int y);
 	LocalMaterialData getDefaultGroundBlock();
 	LocalMaterialData getDefaultStoneBlock();
 	LocalMaterialData getDefaultWaterBlock();
 	LocalMaterialData getDefaultDeepslateBlock();
-	void doSurfaceAndGroundControl(long worldSeed, GeneratingChunk generatingChunk, ChunkBuffer chunkBuffer, int x, int z, IBiome biome);
+	int getDeepslateStartY();
+	int getDeepslateFuzzy();
+	void doSurfaceAndGroundControl(long worldSeed, GeneratingChunk generatingChunk, ChunkBuffer chunkBuffer, int x, int z, int maxY, IBiome biome);
 	boolean hasReplaceBlocksSettings();
 	ReplaceBlockMatrix getReplaceBlocks();
 	

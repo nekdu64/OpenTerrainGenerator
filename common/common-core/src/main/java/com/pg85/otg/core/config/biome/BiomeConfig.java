@@ -42,11 +42,11 @@ import com.pg85.otg.util.minecraft.SaplingType;
 
 /**
  * BiomeConfig (*.bc) classes
- * 
+ * <p>
  * IBiomeConfig defines anything that's used/exposed between projects.
  * BiomeConfigBase implements anything needed for IBiomeConfig. BiomeConfig
  * contains only fields/methods used for io/serialisation/instantiation.
- * 
+ * <p>
  * BiomeConfig should be used only in common-core and platform-specific layers,
  * when reading/writing settings on app start. IBiomeConfig should be used
  * wherever settings are used in code.
@@ -102,7 +102,7 @@ public class BiomeConfig extends BiomeConfigBase
 	// biomes in otg worlds.
 	private SettingsContainer privateSettings = new SettingsContainer();
 
-	class SettingsContainer
+	static class SettingsContainer
 	{	
 		private int configWaterLevelMax;
 		private int configWaterLevelMin;
@@ -116,7 +116,7 @@ public class BiomeConfig extends BiomeConfigBase
 		private double volatilityWeightRaw1;
 		private double volatilityWeightRaw2;
 
-		private Map<EntityCategory, List<WeightedMobSpawnGroup>> spawnGroups = new HashMap<>();
+		private final Map<EntityCategory, List<WeightedMobSpawnGroup>> spawnGroups = new HashMap<>();
 	}
 
 	public BiomeConfig(String biomeName)
@@ -190,6 +190,8 @@ public class BiomeConfig extends BiomeConfigBase
 			this.settings.surfaceBlock = reader.getSetting(BiomeStandardValues.SURFACE_BLOCK, logger, materialReader);
 			this.settings.groundBlock = reader.getSetting(BiomeStandardValues.GROUND_BLOCK, logger, materialReader);
 			this.settings.deepslateBlock = reader.getSetting(BiomeStandardValues.DEEPSLATE_BLOCK, logger, materialReader);
+			this.settings.deepslateStartY = reader.getSetting(BiomeStandardValues.DEEPSLATE_START_Y, logger);
+			this.settings.deepslateFuzzy = reader.getSetting(BiomeStandardValues.DEEPSLATE_FUZZY, logger);
 
 			this.settings.underWaterSurfaceBlock = reader.getSetting(BiomeStandardValues.UNDER_WATER_SURFACE_BLOCK, logger, materialReader);		
 			if(this.settings.underWaterSurfaceBlock == null)
@@ -642,7 +644,13 @@ public class BiomeConfig extends BiomeConfigBase
 				"The surface block used for the biome when underwater, usually the same as GroundBlock.");
 
 			writer.putSetting(BiomeStandardValues.DEEPSLATE_BLOCK, this.settings.deepslateBlock,
-					"The block that appears in deeper regions of the biome.");
+				"The block that appears in deeper regions of the biome.");
+
+			writer.putSetting(BiomeStandardValues.DEEPSLATE_START_Y, this.settings.deepslateStartY,
+				"The Y value where your deepslate starts, defaults to 0");
+
+			writer.putSetting(BiomeStandardValues.DEEPSLATE_FUZZY, this.settings.deepslateFuzzy,
+				"How many blocks above the start point where deepslate blocks can be found, defaults to 8");
 		}
 
 		writer.putSetting(SurfaceGeneratorSetting.SURFACE_AND_GROUND_CONTROL, this.settings.surfaceAndGroundControl,

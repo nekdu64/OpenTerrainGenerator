@@ -111,6 +111,7 @@ public class OTGNoiseChunkGenerator extends ChunkGenerator
 
 	private final Climate.Sampler sampler;
 	private final Registry<NormalNoise.NoiseParameters> noises;
+	private ChunkCoordinate fixBiomesForChunk;
 
 	public OTGNoiseChunkGenerator (BiomeSource biomeSource, long seed, Registry<StructureSet> structureSetRegistry, Registry<NormalNoise.NoiseParameters> noiseRegistry, Holder<NoiseGeneratorSettings> generatorSettings)
 	{
@@ -125,7 +126,7 @@ public class OTGNoiseChunkGenerator extends ChunkGenerator
 	// Vanilla has two biome sources, where the first is population and the second is runtime. Don't know the practical difference this makes.
 	private OTGNoiseChunkGenerator (String presetFolderName, BiomeSource populationSource, BiomeSource runtimeSource, Registry<StructureSet> structureSetRegistry, Registry<NormalNoise.NoiseParameters> noiseRegistry, long seed, Holder<NoiseGeneratorSettings> generatorSettings)
 	{
-		super(structureSetRegistry, Optional.of(getEnabledStructures(presetFolderName, )), populationSource, runtimeSource, seed);
+		super(structureSetRegistry, Optional.of(getEnabledStructures(presetFolderName)), populationSource, runtimeSource, seed);
 		if (!(populationSource instanceof ILayerSource)) {
 			throw new RuntimeException("OTG has detected an incompatible biome provider- try using otg:otg as the biome source name");
 		}
@@ -141,8 +142,8 @@ public class OTGNoiseChunkGenerator extends ChunkGenerator
 
 		this.preset = OTG.getEngine().getPresetLoader().getPresetByFolderName(presetFolderName);
 		this.structurePlacementSettings = getStructurePlacementMap(preset.getWorldConfig());
-		this.shadowChunkGenerator = new ShadowChunkGenerator();
 		this.internalGenerator = new OTGChunkGenerator(this.preset, seed, (ILayerSource) populationSource, ((PaperPresetLoader) OTG.getEngine().getPresetLoader()).getGlobalIdMapping(presetFolderName), OTG.getEngine().getLogger());
+		this.shadowChunkGenerator = new ShadowChunkGenerator(internalGenerator.getMinY(), internalGenerator.getMaxY());
 		this.chunkDecorator = new OTGChunkDecorator();
 
 		this.router = genSettings.createNoiseRouter(this.noises, seed);
@@ -254,7 +255,7 @@ public class OTGNoiseChunkGenerator extends ChunkGenerator
 			ChunkPos pos = new ChunkPos(chunkCoord.getChunkX(), chunkCoord.getChunkZ());
 			findNoiseStructures(pos, chunkAccess, world.structureFeatureManager(), structures, junctions);
 
-			this.internalGenerator.populateNoise(this.preset.getWorldConfig().getWorldHeightCap(), random, buffer, buffer.getChunkCoordinate(), structures, junctions);
+			this.internalGenerator.populateNoise(random, buffer, buffer.getChunkCoordinate(), structures, junctions);
 			this.shadowChunkGenerator.setChunkGenerated(chunkCoord);			
 		}
 	}
@@ -341,7 +342,7 @@ public class OTGNoiseChunkGenerator extends ChunkGenerator
 
 			findNoiseStructures(pos, chunk, accessor, structures, junctions);
 
-			this.internalGenerator.populateNoise(this.preset.getWorldConfig().getWorldHeightCap(), random, buffer, buffer.getChunkCoordinate(), structures, junctions);
+			this.internalGenerator.populateNoise(random, buffer, buffer.getChunkCoordinate(), structures, junctions);
 			this.shadowChunkGenerator.setChunkGenerated(chunkCoord);
 		}
 
@@ -758,17 +759,17 @@ public class OTGNoiseChunkGenerator extends ChunkGenerator
 
 	public int getHighestBlockYInUnloadedChunk(Random worldRandom, int x, int z, boolean findSolid, boolean findLiquid, boolean ignoreLiquid, boolean ignoreSnow, ServerLevel level)
 	{
-		return this.shadowChunkGenerator.getHighestBlockYInUnloadedChunk(this.internalGenerator, this.preset.getWorldConfig().getWorldHeightCap(), worldRandom, x, z, findSolid, findLiquid, ignoreLiquid, ignoreSnow, level);
+		return this.shadowChunkGenerator.getHighestBlockYInUnloadedChunk(this.internalGenerator, worldRandom, x, z, findSolid, findLiquid, ignoreLiquid, ignoreSnow, level);
 	}
 
 	public LocalMaterialData getMaterialInUnloadedChunk(Random worldRandom, int x, int y, int z, ServerLevel level)
 	{
-		return this.shadowChunkGenerator.getMaterialInUnloadedChunk(this.internalGenerator, this.preset.getWorldConfig().getWorldHeightCap(), worldRandom, x, y, z, level);
+		return this.shadowChunkGenerator.getMaterialInUnloadedChunk(this.internalGenerator, worldRandom, x, y, z, level);
 	}
 
 	public PaperChunkBuffer getChunkWithoutLoadingOrCaching(Random random, ChunkCoordinate chunkCoord, ServerLevel level)
 	{
-		return this.shadowChunkGenerator.getChunkWithoutLoadingOrCaching(this.internalGenerator, this.preset.getWorldConfig().getWorldHeightCap(), random, chunkCoord, level);
+		return this.shadowChunkGenerator.getChunkWithoutLoadingOrCaching(this.internalGenerator, random, chunkCoord, level);
 	}
 	// Uses the vanilla method of checking if there is a vanilla structure in range
 	// Might be slower than old solution in ShadowChunkGenerator

@@ -131,6 +131,7 @@ public class ReplaceBlockMatrix
 	public boolean replacesBedrock = false;
 	public boolean replacesSandStone = false;
 	public boolean replacesRedSandStone = false;
+	public boolean replacesDeepslate = false;
 
 	public ReplaceBlockMatrix(String setting, IMaterialReader reader, int minY, int maxY) throws InvalidConfigException
 	{
@@ -165,7 +166,7 @@ public class ReplaceBlockMatrix
 		setInstructions(instructions);		
 	}
 	
-	public void init(LocalMaterialData biomeCooledLavaBlock, LocalMaterialData biomeIceBlock, LocalMaterialData biomePackedIceBlock, LocalMaterialData biomeSnowBlock, LocalMaterialData biomeWaterBlock, LocalMaterialData biomeStoneBlock, LocalMaterialData biomeGroundBlock, LocalMaterialData biomeSurfaceBlock, LocalMaterialData biomeUnderWaterSurfaceBlock, LocalMaterialData biomeBedrockBlock, LocalMaterialData biomeSandStoneBlock, LocalMaterialData biomeRedSandStoneBlock)
+	public void init(LocalMaterialData biomeCooledLavaBlock, LocalMaterialData biomeIceBlock, LocalMaterialData biomePackedIceBlock, LocalMaterialData biomeSnowBlock, LocalMaterialData biomeWaterBlock, LocalMaterialData biomeStoneBlock, LocalMaterialData biomeGroundBlock, LocalMaterialData biomeSurfaceBlock, LocalMaterialData biomeUnderWaterSurfaceBlock, LocalMaterialData biomeBedrockBlock, LocalMaterialData biomeSandStoneBlock, LocalMaterialData biomeRedSandStoneBlock, LocalMaterialData biomeDeepslateBlock)
 	{
 		// Fill maps for faster access
 		for(ReplacedBlocksInstruction instruction : this.instructions)
@@ -265,6 +266,10 @@ public class ReplaceBlockMatrix
 			if(instruction.from.matches(biomeRedSandStoneBlock))
 			{
 				this.replacesRedSandStone = true;
+			}
+			if(instruction.from.matches(biomeDeepslateBlock))
+			{
+				this.replacesDeepslate = true;
 			}
 		}
 	}

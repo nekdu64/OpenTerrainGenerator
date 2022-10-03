@@ -116,7 +116,7 @@ public class OTGChunkGenerator implements ISurfaceGeneratorNoiseProvider
 		// Setup noises
 		Random random = new Random(seed);
 
-		this.noiseSizeY = preset.getWorldConfig().getWorldHeightCap() / 8;
+		this.noiseSizeY = preset.getWorldConfig().getWorldHeight() / 8;
 
 		this.interpolationNoise = new OctavePerlinNoiseSampler(random, IntStream.rangeClosed(-7, 0));
 		this.lowerInterpolatedNoise = new OctavePerlinNoiseSampler(random, IntStream.rangeClosed(-15, 0));
@@ -434,7 +434,7 @@ public class OTGChunkGenerator implements ISurfaceGeneratorNoiseProvider
 
 	// Surface / ground / stone blocks / SAGC
 
-	public void populateNoise(int worldHeightCap, Random random, ChunkBuffer buffer, ChunkCoordinate chunkCoord, ObjectList<JigsawStructureData> structures, ObjectList<JigsawStructureData> junctions)
+	public void populateNoise(Random random, ChunkBuffer buffer, ChunkCoordinate chunkCoord, ObjectList<JigsawStructureData> structures, ObjectList<JigsawStructureData> junctions)
 	{
 		ILogger logger = OTG.getEngine().getLogger();
 
@@ -607,7 +607,7 @@ public class OTGChunkGenerator implements ISurfaceGeneratorNoiseProvider
 
 								if (density > 0.0)
 								{
-									LocalMaterialData material = biomeConfig.getStoneBlockReplaced(realY);
+									LocalMaterialData material = biomeConfig.getStoneOrDeepslateReplaced(realY, random);
 									if (this.oreVeinGenerator != null) {
 										LocalMaterialData ore = this.oreVeinGenerator.getMaterial(realX, realY, realZ, noiseX, noiseY, noiseZ, xLerp, yLerp, zLerp, data);
 
@@ -636,18 +636,18 @@ public class OTGChunkGenerator implements ISurfaceGeneratorNoiseProvider
 			noiseData[1] = xColumn;
 		}
 
-		// TODO: lift up into base material setting, this is not optimal
+		/*// TODO: lift up into base material setting, this is not optimal
 		for (int x = 0; x < 16; x++) {
 			for (int z = 0; z < 16; z++) {
 				biomeConfig = biomes[x*16+z].getBiomeConfig();
-				for (int y = 8; y >= -64; y--) {
+				for (int y = 8; y >= minY; y--) {
 					if (y > 0 && y > random.nextInt(8)) continue;
 					buffer.setBlock(x, y, z, biomeConfig.getDefaultDeepslateBlock());
 				}
 			}
-		}
+		}*/
 
-		doSurfaceAndGroundControl(biomes, random, worldHeightCap, this.seed, buffer, waterLevel);
+		doSurfaceAndGroundControl(biomes, random, this.seed, buffer, waterLevel);
 		
 		if(logger.getLogCategoryEnabled(LogCategory.PERFORMANCE) && (System.currentTimeMillis() - startTime) > 50)
 		{
@@ -705,13 +705,13 @@ public class OTGChunkGenerator implements ISurfaceGeneratorNoiseProvider
 		return noiseSizeY;
 	}
 
-	private void doSurfaceAndGroundControl(IBiome[] biomes, Random random, int heightCap, long worldSeed, ChunkBuffer chunkBuffer, int[] waterLevel)
+	private void doSurfaceAndGroundControl(IBiome[] biomes, Random random, long worldSeed, ChunkBuffer chunkBuffer, int[] waterLevel)
 	{
 		// Process surface and ground blocks for each column in the chunk
 		ChunkCoordinate chunkCoord = chunkBuffer.getChunkCoordinate();		
 		double d1 = 0.03125D;
 		this.biomeBlocksNoise.set(this.biomeBlocksNoiseGen.getRegion(this.biomeBlocksNoise.get(), chunkCoord.getBlockX(), chunkCoord.getBlockZ(), Constants.CHUNK_SIZE, Constants.CHUNK_SIZE, d1 * 2.0D, d1 * 2.0D, 1.0D));
-		GeneratingChunk generatingChunk = new GeneratingChunk(random, waterLevel, this.biomeBlocksNoise.get(), heightCap);
+		GeneratingChunk generatingChunk = new GeneratingChunk(random, waterLevel, this.biomeBlocksNoise.get(), maxY, minY);
 		IBiome biome;
 		for (int x = 0; x < Constants.CHUNK_SIZE; x++)
 		{
@@ -719,7 +719,7 @@ public class OTGChunkGenerator implements ISurfaceGeneratorNoiseProvider
 			{
 				// Get the current biome config and some properties
 				biome = biomes[x * Constants.CHUNK_SIZE + z];
-				biome.getBiomeConfig().doSurfaceAndGroundControl(worldSeed, generatingChunk, chunkBuffer, chunkCoord.getBlockX() + x, chunkCoord.getBlockZ() + z, biome);
+				biome.getBiomeConfig().doSurfaceAndGroundControl(worldSeed, generatingChunk, chunkBuffer, chunkCoord.getBlockX() + x, chunkCoord.getBlockZ() + z, maxY, biome);
 			}
 		}
 	}

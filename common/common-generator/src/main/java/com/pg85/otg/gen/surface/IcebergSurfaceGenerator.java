@@ -27,7 +27,7 @@ public class IcebergSurfaceGenerator extends MultipleLayersSurfaceGenerator
 	}
 
 	@Override
-	protected void spawnColumn(long worldSeed, MultipleLayersSurfaceGeneratorLayer layer, GeneratingChunk generatingChunk, ChunkBuffer chunkBuffer, IBiome biome, int xInWorld, int zInWorld)
+	protected void spawnColumn(long worldSeed, MultipleLayersSurfaceGeneratorLayer layer, GeneratingChunk generatingChunk, ChunkBuffer chunkBuffer, IBiome biome, int xInWorld, int zInWorld, int minY)
 	{
 		int internalX = xInWorld & 0xf;
 		int internalZ = zInWorld & 0xf;
@@ -46,7 +46,7 @@ public class IcebergSurfaceGenerator extends MultipleLayersSurfaceGenerator
 		if (biomeConfig.isCeilingBedrock())
 		{
 			// Moved one block lower to fix lighting issues
-			chunkBuffer.setBlock(internalX, generatingChunk.heightCap - 2, internalZ, biomeConfig.getBedrockBlockReplaced(generatingChunk.heightCap - 2));
+			chunkBuffer.setBlock(internalX, generatingChunk.maxY - 2, internalZ, biomeConfig.getBedrockBlockReplaced(generatingChunk.maxY - 2));
 		}
 
 		double icebergHeight = 0;
@@ -101,7 +101,7 @@ public class IcebergSurfaceGenerator extends MultipleLayersSurfaceGenerator
 		LocalMaterialData blockOnPreviousPos = null;
 
 		int topY = chunkBuffer.getHighestBlockForColumn(internalX, internalZ);
-		for (int y = Math.max(topY, (int)icebergHeight + 1); y >= 0; y--)
+		for (int y = Math.max(topY, (int)icebergHeight + 1); y >= minY; y--)
 		{
 			if (generatingChunk.mustCreateBedrockAt(biomeConfig.isFlatBedrock(), biomeConfig.isBedrockDisabled(), biomeConfig.isCeilingBedrock(), y))
 			{

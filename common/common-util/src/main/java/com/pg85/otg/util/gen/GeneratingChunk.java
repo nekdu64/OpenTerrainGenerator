@@ -1,7 +1,6 @@
 package com.pg85.otg.util.gen;
 
 import com.pg85.otg.constants.Constants;
-import com.pg85.otg.util.ChunkCoordinate;
 
 import java.util.Random;
 
@@ -12,26 +11,28 @@ import java.util.Random;
 public final class GeneratingChunk
 {
 
-	private static final int BEDROCK_LAYER_HEIGHT = -59;
+	private static final int BEDROCK_LAYER_HEIGHT = 5;
 
-	public final int heightCap;
+	public final int maxY;
+	private final int minY;
 	public final Random random;
 	private final int[] waterLevel;
 	private final double[] surfaceNoise;
 
-	public GeneratingChunk(Random random, int[] waterLevel, double[] surfaceNoise, int heightCap)
+	public GeneratingChunk(Random random, int[] waterLevel, double[] surfaceNoise, int maxY, int minY)
 	{
 		this.random = random;
 		this.waterLevel = waterLevel;
 		this.surfaceNoise = surfaceNoise;
-		this.heightCap = heightCap;
+		this.maxY = maxY;
+		this.minY = minY;
 	}
 
 	/**
 	 * Gets the surface noise value at the given position.
 	 * 
-	 * @param x X position, 0 <= x < {@value ChunkCoordinate#CHUNK_SIZE}.
-	 * @param z Z position, 0 <= z < {@value ChunkCoordinate#CHUNK_SIZE}.
+	 * @param x X position, 0 <= x < {@value Constants#CHUNK_SIZE}.
+	 * @param z Z position, 0 <= z < {@value Constants#CHUNK_SIZE}.
 	 * @return The surface noise value.
 	 */
 	public double getNoise(int x, int z)
@@ -42,8 +43,8 @@ public final class GeneratingChunk
 	/**
 	 * Gets the water level at the given position.
 	 * 
-	 * @param x X position, 0 <= x < {@value ChunkCoordinate#CHUNK_SIZE}.
-	 * @param z Z position, 0 <= z < {@value ChunkCoordinate#CHUNK_SIZE}.
+	 * @param x X position, 0 <= x < {@value Constants#CHUNK_SIZE}.
+	 * @param z Z position, 0 <= z < {@value Constants#CHUNK_SIZE}.
 	 * @return The water level.
 	 */
 	public int getWaterLevel(int x, int z)
@@ -54,7 +55,6 @@ public final class GeneratingChunk
 	/**
 	 * Gets whether bedrock should be created at the given position.
 	 *
-	 * @param worldConfig The worldConfig, for bedrock settings.
 	 * @param y			The y position.
 	 * @return True if bedrock should be created, false otherwise.
 	 */
@@ -68,25 +68,21 @@ public final class GeneratingChunk
 		// Handle flat bedrock
 		if (flatBedrock)
 		{
-			if (!disableBedrock && y == -64)
+			if (!disableBedrock && y == minY)
 			{
 				return true;
 			}
-			if (ceilingBedrock && y >= this.heightCap - 1)
-			{
-				return true;
-			}
-			return false;
+			return ceilingBedrock && y >= this.maxY - 1;
 		}
 
-		// Otherwise we have normal bedrock
-		if (!disableBedrock && y < -59)
+		// Otherwise we have normal (non-flat) bedrock
+		if (!disableBedrock && y < minY + BEDROCK_LAYER_HEIGHT)
 		{
-			return y <= this.random.nextInt(5)-64;
+			return y <= minY + this.random.nextInt(5);
 		}
 		if (ceilingBedrock)
 		{
-			int amountBelowHeightCap = this.heightCap - y - 1;
+			int amountBelowHeightCap = this.maxY - y - 1;
 			if (amountBelowHeightCap < 0 || amountBelowHeightCap > BEDROCK_LAYER_HEIGHT)
 			{
 				return false;

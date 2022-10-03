@@ -4,6 +4,7 @@ import com.pg85.otg.config.settingType.DoubleArraySetting;
 import com.pg85.otg.config.settingType.MaterialSetting;
 import com.pg85.otg.config.settingType.Setting;
 import com.pg85.otg.config.settingType.Settings;
+import com.pg85.otg.constants.Constants;
 import com.pg85.otg.constants.SettingsEnums;
 import com.pg85.otg.constants.SettingsEnums.GrassColorModifier;
 import com.pg85.otg.constants.SettingsEnums.MineshaftType;
@@ -72,6 +73,8 @@ public class BiomeStandardValues extends Settings
 		BIOME_RARITY_WHEN_ISLE = intSetting("BiomeRarityWhenIsle", 97, 0, Integer.MAX_VALUE),
 		SMOOTH_RADIUS = intSetting("SmoothRadius", 2, 0, 32),
 		CUSTOM_HEIGHT_CONTROL_SMOOTH_RADIUS = intSetting("CustomHeightControlSmoothRadius", 2, 0, 32),
+		DEEPSLATE_START_Y = intSetting("DeepslateStartY", 0, Constants.MIN_POSSIBLE_Y, Constants.MAX_POSSIBLE_Y),
+		DEEPSLATE_FUZZY = intSetting("DeepslateFuzzy", 8, 0, Constants.MIN_POSSIBLE_Y),
 		WATER_LEVEL_MAX = WorldStandardValues.WATER_LEVEL_MAX,
 		WATER_LEVEL_MIN = WorldStandardValues.WATER_LEVEL_MIN,
 		VILLAGE_SIZE = intSetting("VillageSize", 6, 0, Integer.MAX_VALUE),
@@ -166,6 +169,5 @@ public class BiomeStandardValues extends Settings
 	public static final Setting<OceanRuinsType> OCEAN_RUINS_TYPE = enumSetting("OceanRuinsType", OceanRuinsType.disabled);
 	public static final Setting<GrassColorModifier> GRASS_COLOR_MODIFIER = enumSetting("GrassColorModifier", GrassColorModifier.None);
 	public static final Setting<SettingsEnums.TemplateBiomeType> TEMPLATE_BIOME_TYPE = enumSetting("TemplateBiomeType", SettingsEnums.TemplateBiomeType.Overworld);
-	public static final Setting<ReplaceBlockMatrix> REPLACED_BLOCKS = replacedBlocksSetting("ReplacedBlocks");	
-	public static final Object[] SURFACE_AND_GROUND_CONTROL = new Object[0];
+	public static final Setting<ReplaceBlockMatrix> REPLACED_BLOCKS = replacedBlocksSetting("ReplacedBlocks");
 }

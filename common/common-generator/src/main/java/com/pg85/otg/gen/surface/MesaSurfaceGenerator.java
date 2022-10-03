@@ -241,7 +241,7 @@ class MesaSurfaceGenerator implements SurfaceGenerator
 	private boolean clayBandsGenerated = false;
 	// net.minecraft.world.biome.BiomeMesa.genTerrainBlocks
 	@Override
-	public void spawn(long worldSeed, GeneratingChunk generatingChunk, ChunkBuffer chunkBuffer, IBiome biome, int xInWorld, int zInWorld)
+	public void spawn(long worldSeed, GeneratingChunk generatingChunk, ChunkBuffer chunkBuffer, IBiome biome, int xInWorld, int zInWorld, int minY)
 	{				
 		if (this.clayBands == null || !this.clayBandsGenerated)
 		{
@@ -310,7 +310,7 @@ class MesaSurfaceGenerator implements SurfaceGenerator
 		if (biomeConfig.isCeilingBedrock())
 		{
 			// Moved one block lower to fix lighting issues
-			chunkBuffer.setBlock(x, generatingChunk.heightCap - 2, z, biomeConfig.getBedrockBlockReplaced(generatingChunk.heightCap - 2));
+			chunkBuffer.setBlock(x, generatingChunk.maxY - 2, z, biomeConfig.getBedrockBlockReplaced(generatingChunk.maxY - 2));
 		}
 		
 		int highestBlockInColumn = chunkBuffer.getHighestBlockForColumn(x, z);
@@ -320,7 +320,7 @@ class MesaSurfaceGenerator implements SurfaceGenerator
 		{
 			maxHeight = (int)bryceHeight;
 		}
-		
+		//TODO: Hardcoded height values, but needs reworking to use minY -auth
 		int minHeight = 0;
 		LocalMaterialData worldMaterial = null;
 		
@@ -357,7 +357,7 @@ class MesaSurfaceGenerator implements SurfaceGenerator
 				// TODO: This'll cause issues with surfaceandgroundcontrol if users configure the 
 				// same biome water block as surface/ground/stone block.
 				// TODO: If other mods have problems bc of replacedblocks in the chunk during ReplaceBiomeBlocks, 
-				// do replaceblock for stone/water here instead of when initially filling the chunk.				
+				// do replaceblock for stone/water here instead of when initially filling the chunk.
 				else if(!worldMaterial.equals(biomeConfig.getWaterBlockReplaced(y)))
 				{
 					if (groundLayerDepth == -1)
