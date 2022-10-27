@@ -37,7 +37,7 @@ public class SmallLakeResource extends FrequencyResourceBase
 	public void spawnForChunkDecoration(IWorldGenRegion worldGenRegion, Random random, ILogger logger, IMaterialReader materialReader)
 	{
 		// TODO: This only checks for a structure start, need to expose the MC method for finding villages on worldGenRegion.
-		if(worldGenRegion.chunkHasDefaultStructure(random, worldGenRegion.getDecorationArea().getChunkBeingDecorated()))
+		if(worldGenRegion.chunkHasDefaultStructure(worldGenRegion.getDecorationArea().getChunkBeingDecorated()))
 		{
 			return;
 		}

@@ -1,27 +1,19 @@
 package com.pg85.otg.forge.gen;
 
-import java.text.MessageFormat;
 import java.util.Random;
 
 import org.apache.commons.lang3.NotImplementedException;
 
-import com.google.gson.JsonSyntaxException;
-import com.pg85.otg.constants.Constants;
 import com.pg85.otg.forge.materials.ForgeMaterialData;
-import com.pg85.otg.forge.util.ForgeNBTHelper;
 import com.pg85.otg.interfaces.IBiome;
 import com.pg85.otg.interfaces.IBiomeConfig;
 import com.pg85.otg.interfaces.IWorldConfig;
 import com.pg85.otg.util.ChunkCoordinate;
 import com.pg85.otg.util.biome.ReplaceBlockMatrix;
 import com.pg85.otg.util.nbt.NamedBinaryTag;
-import com.pg85.otg.util.logging.LogCategory;
-import com.pg85.otg.util.logging.LogLevel;
 import com.pg85.otg.util.materials.LocalMaterialData;
 import com.pg85.otg.util.minecraft.TreeType;
 
-import net.minecraft.nbt.*;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.chunk.ChunkStatus;
@@ -165,7 +157,7 @@ public class MCWorldGenRegion extends ForgeWorldGenRegion
 	}	
 	
 	@Override
-	public boolean chunkHasDefaultStructure(Random worldRandom, ChunkCoordinate chunkCoordinate)
+	public boolean chunkHasDefaultStructure(ChunkCoordinate chunkCoordinate)
 	{
 		throw new NotImplementedException("This method is not available for non-OTG worlds, you're trying to use an unsupported feature.");
 	}

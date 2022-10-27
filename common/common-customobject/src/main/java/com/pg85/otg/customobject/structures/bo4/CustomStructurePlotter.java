@@ -263,7 +263,7 @@ public class CustomStructurePlotter
 		{
 			IBiomeConfig biomeConfig = worldGenRegion.getCachedBiomeProvider().getBiomeConfig(chunkCoord.getBlockX() + DecorationArea.BO_CHUNK_CENTER_X, chunkCoord.getBlockZ() + DecorationArea.BO_CHUNK_CENTER_Z);		  
 			List<ICustomStructureGen> customStructureGens = new ArrayList<>();
-			if(targetStructure == null && !worldGenRegion.chunkHasDefaultStructure(rand, chunkCoord))
+			if(targetStructure == null && !worldGenRegion.chunkHasDefaultStructure(chunkCoord))
 			{
 				// Get Bo4's for this biome
 				for (ICustomStructureGen res : biomeConfig.getCustomStructures())
@@ -490,7 +490,7 @@ public class CustomStructurePlotter
 													canSpawnHere = false;
 													if(targetStructure != null)
 													{
-														if(!isBo4ChunkPlotted(chunkCoord) && !worldGenRegion.chunkHasDefaultStructure(rand, chunkCoord))
+														if(!isBo4ChunkPlotted(chunkCoord) && !worldGenRegion.chunkHasDefaultStructure(chunkCoord))
 														{
 															if(targetBiomes.size() == 0)
 															{
@@ -508,7 +508,7 @@ public class CustomStructurePlotter
 														biomeStructures = this.structureNamesPerChunk.get(ChunkCoordinate.fromChunkCoords((chunkCoord.getChunkX() + scanDistance), (chunkCoord.getChunkZ() + i)));															
 														if(biomeStructures == null)
 														{
-															if(!isBo4ChunkPlotted(chunkCoord) && !worldGenRegion.chunkHasDefaultStructure(rand, chunkCoord))
+															if(!isBo4ChunkPlotted(chunkCoord) && !worldGenRegion.chunkHasDefaultStructure(chunkCoord))
 															{
 																biomeConfig3 = worldGenRegion.getCachedBiomeProvider().getBiomeConfig((chunkCoord.getChunkX() + scanDistance) * 16 + DecorationArea.BO_CHUNK_CENTER_X, (chunkCoord.getChunkZ() + i) * 16 + DecorationArea.BO_CHUNK_CENTER_Z);
 																// Get cached data if available
@@ -581,7 +581,7 @@ public class CustomStructurePlotter
 													canSpawnHere = false;
 													if(targetStructure != null)
 													{
-														if(!isBo4ChunkPlotted(chunkCoord) && !worldGenRegion.chunkHasDefaultStructure(rand, chunkCoord))
+														if(!isBo4ChunkPlotted(chunkCoord) && !worldGenRegion.chunkHasDefaultStructure(chunkCoord))
 														{
 															if(targetBiomes.size() == 0)
 															{
@@ -599,7 +599,7 @@ public class CustomStructurePlotter
 														biomeStructures = this.structureNamesPerChunk.get(ChunkCoordinate.fromChunkCoords((chunkCoord.getChunkX() - scanDistance), (chunkCoord.getChunkZ() + i)));
 														if(biomeStructures == null)
 														{
-															if(!isBo4ChunkPlotted(chunkCoord) && !worldGenRegion.chunkHasDefaultStructure(rand, chunkCoord))
+															if(!isBo4ChunkPlotted(chunkCoord) && !worldGenRegion.chunkHasDefaultStructure(chunkCoord))
 															{
 																biomeConfig3 = worldGenRegion.getCachedBiomeProvider().getBiomeConfig((chunkCoord.getChunkX() - scanDistance) * 16 + DecorationArea.BO_CHUNK_CENTER_X, (chunkCoord.getChunkZ() + i) * 16 + DecorationArea.BO_CHUNK_CENTER_Z);
 																if(!biomeConfig3.getName().equals(biomeConfig.getName()))
@@ -671,7 +671,7 @@ public class CustomStructurePlotter
 													canSpawnHere = false;
 													if(targetStructure != null)
 													{
-														if(!isBo4ChunkPlotted(chunkCoord) && !worldGenRegion.chunkHasDefaultStructure(rand, chunkCoord))
+														if(!isBo4ChunkPlotted(chunkCoord) && !worldGenRegion.chunkHasDefaultStructure(chunkCoord))
 														{
 															if(targetBiomes.size() == 0)
 															{
@@ -689,7 +689,7 @@ public class CustomStructurePlotter
 														biomeStructures = this.structureNamesPerChunk.get(ChunkCoordinate.fromChunkCoords((chunkCoord.getChunkX() + i), (chunkCoord.getChunkZ() + scanDistance)));
 														if(biomeStructures == null)
 														{
-															if(!isBo4ChunkPlotted(chunkCoord) && !worldGenRegion.chunkHasDefaultStructure(rand, chunkCoord))
+															if(!isBo4ChunkPlotted(chunkCoord) && !worldGenRegion.chunkHasDefaultStructure(chunkCoord))
 															{
 																biomeConfig3 = worldGenRegion.getCachedBiomeProvider().getBiomeConfig((chunkCoord.getChunkX() + i) * 16 + DecorationArea.BO_CHUNK_CENTER_X, (chunkCoord.getChunkZ() + scanDistance) * 16 + DecorationArea.BO_CHUNK_CENTER_Z);
 																if(!biomeConfig3.getName().equals(biomeConfig.getName()))
@@ -761,7 +761,7 @@ public class CustomStructurePlotter
 													canSpawnHere = false;
 													if(targetStructure != null)
 													{
-														if(!isBo4ChunkPlotted(chunkCoord) && !worldGenRegion.chunkHasDefaultStructure(rand, chunkCoord))
+														if(!isBo4ChunkPlotted(chunkCoord) && !worldGenRegion.chunkHasDefaultStructure(chunkCoord))
 														{
 															if(targetBiomes.size() == 0)
 															{
@@ -779,7 +779,7 @@ public class CustomStructurePlotter
 														biomeStructures = this.structureNamesPerChunk.get(ChunkCoordinate.fromChunkCoords((chunkCoord.getChunkX() + i), (chunkCoord.getChunkZ() - scanDistance)));
 														if(biomeStructures == null)
 														{
-															if(!isBo4ChunkPlotted(chunkCoord) && !worldGenRegion.chunkHasDefaultStructure(rand, chunkCoord))
+															if(!isBo4ChunkPlotted(chunkCoord) && !worldGenRegion.chunkHasDefaultStructure(chunkCoord))
 															{
 																biomeConfig3 = worldGenRegion.getCachedBiomeProvider().getBiomeConfig((chunkCoord.getChunkX() + i) * 16 + DecorationArea.BO_CHUNK_CENTER_X, (chunkCoord.getChunkZ() - scanDistance) * 16 + DecorationArea.BO_CHUNK_CENTER_Z);
 																if(!biomeConfig3.getName().equals(biomeConfig.getName()))

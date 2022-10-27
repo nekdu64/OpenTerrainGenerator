@@ -20,12 +20,13 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.core.WritableRegistry;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.RegistryLookupCodec;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.biome.Climate;
@@ -49,21 +50,17 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public class OTGBiomeProvider extends BiomeSource implements ILayerSource
 {
 	public static final MapCodec<OTGBiomeProvider> DIRECT_CODEC = RecordCodecBuilder.mapCodec(
-		(instance) -> {
-			return instance.group(
-				Codec.STRING.fieldOf("preset_name").stable().forGetter((provider) -> provider.presetFolderName),
-				ExtraCodecs.<Pair<Climate.ParameterPoint, Supplier<Biome>>>nonEmptyList(
-					RecordCodecBuilder.<Pair<Climate.ParameterPoint, Supplier<Biome>>>create(
-						(p_187078_) -> { return p_187078_.group(Climate.ParameterPoint.CODEC.fieldOf("parameters").forGetter(Pair::getFirst), Biome.CODEC.fieldOf("biome").forGetter(Pair::getSecond)).apply(p_187078_, Pair::of); }
-					).listOf()
-				).xmap(
-					Climate.ParameterList::new, 
-					(Function<Climate.ParameterList<Supplier<Biome>>, List<Pair<Climate.ParameterPoint, Supplier<Biome>>>>) Climate.ParameterList::values
-				).fieldOf("biomes").forGetter(
-					(p_187080_) -> { return p_187080_.parameters; }
-				)
-			).apply(instance, OTGBiomeProvider::new);
-		}
+		(instance) -> instance.group(
+			Codec.STRING.fieldOf("preset_name").stable().forGetter((provider) -> provider.presetFolderName),
+			ExtraCodecs.nonEmptyList(
+				RecordCodecBuilder.<Pair<Climate.ParameterPoint, Holder<Biome>>>create(
+					(ins) -> ins.group(Climate.ParameterPoint.CODEC.fieldOf("parameters").forGetter(Pair::getFirst), Biome.CODEC.fieldOf("biome").forGetter(Pair::getSecond)).apply(ins, Pair::of)
+				).listOf()
+			).xmap(Climate.ParameterList::new, Climate.ParameterList::values
+			).fieldOf("biomes").forGetter(
+				(p_187080_) -> p_187080_.parameters
+			)
+		).apply(instance, OTGBiomeProvider::new)
 	);
 	public static final Codec<OTGBiomeProvider> CODEC = 
 		Codec.mapEither(
@@ -80,7 +77,7 @@ public class OTGBiomeProvider extends BiomeSource implements ILayerSource
 			}
 		).codec()
 	;
-	private final Climate.ParameterList<Supplier<Biome>> parameters;
+	private final Climate.ParameterList<Holder<Biome>> parameters;
 	private final Optional<OTGBiomeProvider.PresetInstance> preset;
 
 	private final Registry<Biome> registry;
@@ -88,19 +85,19 @@ public class OTGBiomeProvider extends BiomeSource implements ILayerSource
 	private final Int2ObjectMap<ResourceKey<Biome>> keyLookup;
 	private final String presetFolderName;
 
-	private OTGBiomeProvider(String presetFolderName, Climate.ParameterList<Supplier<Biome>> parameters)
+	private OTGBiomeProvider(String presetFolderName, Climate.ParameterList<Holder<Biome>> parameters)
 	{
 		this(presetFolderName, parameters, Optional.empty());
 	}
 
-	public OTGBiomeProvider(String presetFolderName, Climate.ParameterList<Supplier<Biome>> parameters, Optional<OTGBiomeProvider.PresetInstance> preset)
+	public OTGBiomeProvider(String presetFolderName, Climate.ParameterList<Holder<Biome>> parameters, Optional<OTGBiomeProvider.PresetInstance> preset)
 	{
 		super(getAllBiomesByPreset(presetFolderName, (WritableRegistry<Biome>)preset.get().biomes()));
 		long seed = 12; // TODO Reimplement this for 1.18, where did seed go? :/
 		this.preset = preset;
 		this.parameters = parameters;
 		this.presetFolderName = presetFolderName;
-		this.registry = (WritableRegistry<Biome>)preset.get().biomes();
+		this.registry = preset.get().biomes();
 		this.layer = ThreadLocal.withInitial(() -> BiomeLayers.create(seed, ((ForgePresetLoader)OTG.getEngine().getPresetLoader()).getPresetGenerationData().get(presetFolderName), OTG.getEngine().getLogger()));
 		this.keyLookup = new Int2ObjectOpenHashMap<>();
 
@@ -126,7 +123,7 @@ public class OTGBiomeProvider extends BiomeSource implements ILayerSource
 		}
 	}
 	
-	private static Stream<Supplier<Biome>> getAllBiomesByPreset(String presetFolderName, WritableRegistry<Biome> registry)
+	private static Stream<Holder<Biome>> getAllBiomesByPreset(String presetFolderName, WritableRegistry<Biome> registry)
 	{
 		if(OTG.getEngine().getPluginConfig().getDeveloperModeEnabled())
 		{
@@ -153,7 +150,7 @@ public class OTGBiomeProvider extends BiomeSource implements ILayerSource
 		return fixBiomeFeatureOrder(biomesForPreset, registry);
 	}
 
-	private static Stream<Supplier<Biome>> fixBiomeFeatureOrder(List<ResourceKey<Biome>> biomesForPreset, WritableRegistry<Biome> registry)
+	private static Stream<Holder<Biome>> fixBiomeFeatureOrder(List<ResourceKey<Biome>> biomesForPreset, WritableRegistry<Biome> registry)
 	{
 		// For some reason Mojang thought it'd be funny to add a method (BiomeSource.buildFeaturesPerStep)
 		// that validates the order of features registered to biomes, making sure that all biomes have
@@ -162,7 +159,7 @@ public class OTGBiomeProvider extends BiomeSource implements ILayerSource
 		// features to biomes in any order without issue, but then it blows up on calling the BiomeSource
 		// constructor. Fix any feature order inconsistencies for OTG biomes before handing them to MC.	
 		
-		List<Biome> biomes = biomesForPreset.stream().map((key) -> registry.getOrThrow(key)).collect(Collectors.toList());
+		List<Biome> biomes = biomesForPreset.stream().map(registry::getOrThrow).toList();
 		ArrayList<PlacedFeature> featureOrder = new ArrayList<>();		
 		HashMap<PlacedFeature,List<PlacedFeature>> dependenciesPerFeature = new HashMap<>();
 
@@ -170,14 +167,14 @@ public class OTGBiomeProvider extends BiomeSource implements ILayerSource
 		
 		// For each feature, find all dependencies (other features that are listed before it)
 		biomes.stream().filter(a -> !a.getRegistryName().getNamespace().equals(com.pg85.otg.constants.Constants.MOD_ID_SHORT)).forEach(biome -> {
-			biome.getGenerationSettings().features().stream().forEach(listForDecorationStep -> {
+			biome.getGenerationSettings().features().forEach(listForDecorationStep -> {
 				for(int i = listForDecorationStep.size() - 1; i >= 0; i--)
 				{
-					PlacedFeature feature2 = listForDecorationStep.get(i).get();
+					PlacedFeature feature2 = listForDecorationStep.get(i).value();
 					List<PlacedFeature> dependenciesForFeature = dependenciesPerFeature.computeIfAbsent(feature2, g -> { return new ArrayList<PlacedFeature>(); });
 					if(i > 0)
 					{
-						PlacedFeature feature3 = listForDecorationStep.get(i - 1).get();
+						PlacedFeature feature3 = listForDecorationStep.get(i - 1).value();
 						if(feature3 != feature2 && !dependenciesForFeature.contains(feature3))
 						{
 							dependenciesForFeature.add(feature3);
@@ -203,10 +200,7 @@ public class OTGBiomeProvider extends BiomeSource implements ILayerSource
 					itemsRemoved++;
 					featureOrder.add(feature);
 					dependenciesPerFeature.remove(feature);
-					dependenciesPerFeature.entrySet().forEach(entry2 -> {
-						List<PlacedFeature> dependencies2 = entry2.getValue();
-						dependencies2.remove(feature);
-					});
+					dependenciesPerFeature.forEach((key, dependencies2) -> dependencies2.remove(feature));
 				}
 			};
 			if(itemsRemoved == 0)
@@ -220,10 +214,10 @@ public class OTGBiomeProvider extends BiomeSource implements ILayerSource
 		
 		// For each feature, find all the other features that are listed before it
 		biomes.stream().filter(a -> a.getRegistryName().getNamespace().equals(com.pg85.otg.constants.Constants.MOD_ID_SHORT)).forEach(biome -> {
-			biome.getGenerationSettings().features().stream().forEach(listForDecorationStep -> {
+			biome.getGenerationSettings().features().forEach(listForDecorationStep -> {
 				for(int i = listForDecorationStep.size() - 1; i >= 0; i--)
 				{
-					PlacedFeature feature2 = listForDecorationStep.get(i).get();
+					PlacedFeature feature2 = listForDecorationStep.get(i).value();
 					// Ignore any features that already have an order determined by non-otg biomes, 
 					// or have already been found in other otg biomes
 					if(!featureOrder.contains(feature2))
@@ -236,24 +230,24 @@ public class OTGBiomeProvider extends BiomeSource implements ILayerSource
 		
 		// For OTG biomes, reorder PlacedFeatures so MC doesn't blow up.
 		biomes.stream().filter(a -> a.getRegistryName().getNamespace().equals(com.pg85.otg.constants.Constants.MOD_ID_SHORT)).forEach(biome -> {
-			List<List<Supplier<PlacedFeature>>> orderedFeatures = new ArrayList<>();
-			biome.getGenerationSettings().features().stream().forEach(listForDecorationStep -> {
-				List<Supplier<PlacedFeature>> orderedFeaturesForDecorationStep = new ArrayList<>();
+			List<HolderSet<PlacedFeature>> orderedFeatures = new ArrayList<>();
+			biome.getGenerationSettings().features().forEach(listForDecorationStep -> {
+				List<Holder<PlacedFeature>> orderedFeaturesForDecorationStep = new ArrayList<>();
 				featureOrder.forEach(orderedFeature -> {
-					listForDecorationStep.forEach(supplier ->
+					listForDecorationStep.forEach(holder ->
 					{
-						if(orderedFeature == supplier.get())
+						if(orderedFeature == holder.value())
 						{
-							orderedFeaturesForDecorationStep.add(supplier);
+							orderedFeaturesForDecorationStep.add(holder);
 						}
 					});
 				});
-				orderedFeatures.add(orderedFeaturesForDecorationStep);
+				orderedFeatures.add(HolderSet.direct(orderedFeaturesForDecorationStep));
 			});
-			biome.getGenerationSettings().features = orderedFeatures.stream().map(ImmutableList::copyOf).collect(ImmutableList.toImmutableList());
+			biome.getGenerationSettings().features = orderedFeatures;
 		});
 
-		return biomes.stream().map((biome) -> () -> biome);		
+		return biomes.stream().map(Holder::direct);
 	}
 
 	protected Codec<? extends BiomeSource> codec()
@@ -298,19 +292,18 @@ public class OTGBiomeProvider extends BiomeSource implements ILayerSource
 			(biomeRegistry) -> { 
 				// Dummy list
 				return new Climate.ParameterList<>(
-					ImmutableList.of(
-						Pair.of(Climate.parameters(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F), () -> {
-							return biomeRegistry.getOrThrow(Biomes.PLAINS);
-						})
-					)
+					ImmutableList.of(Pair.of(
+						Climate.parameters(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F),
+						biomeRegistry.getHolderOrThrow(Biomes.PLAINS)
+					))
 				);
 			}
 		);
 		
 		public final ResourceLocation name;
-		private final Function<Registry<Biome>, Climate.ParameterList<Supplier<Biome>>> parameterSource;
+		private final Function<Registry<Biome>, Climate.ParameterList<Holder<Biome>>> parameterSource;
 	
-		public Preset(ResourceLocation key, Function<Registry<Biome>, Climate.ParameterList<Supplier<Biome>>> parameterSource)
+		public Preset(ResourceLocation key, Function<Registry<Biome>, Climate.ParameterList<Holder<Biome>>> parameterSource)
 		{
 			this.name = key;
 			this.parameterSource = parameterSource;
@@ -318,39 +311,36 @@ public class OTGBiomeProvider extends BiomeSource implements ILayerSource
 
 		OTGBiomeProvider biomeSource(OTGBiomeProvider.PresetInstance presetInstance, boolean withInstance)
 		{
-			Climate.ParameterList<Supplier<Biome>> parameterlist = this.parameterSource.apply(presetInstance.biomes());
+			Climate.ParameterList<Holder<Biome>> parameterlist = this.parameterSource.apply(presetInstance.biomes());
 			return new OTGBiomeProvider(presetInstance.presetFolderName, parameterlist, withInstance ? Optional.of(presetInstance) : Optional.empty());
 		}
 	}
 
-	public static record PresetInstance(String presetFolderName, OTGBiomeProvider.Preset preset, Registry<Biome> biomes)
+	public record PresetInstance(String presetFolderName, OTGBiomeProvider.Preset preset, Registry<Biome> biomes)
 	{
 		public static final MapCodec<OTGBiomeProvider.PresetInstance> CODEC = RecordCodecBuilder.mapCodec((instance) -> {
 			return instance.group(
 			Codec.STRING.fieldOf("preset_name").stable().forGetter(OTGBiomeProvider.PresetInstance::presetFolderName),
 			ResourceLocation.CODEC.flatXmap(
-				(key) -> {
-					return Optional.ofNullable(new OTGBiomeProvider.Preset(
-						new ResourceLocation("otg"),
-						(biomeRegistry) -> {
-							// Dummy list
-							return new Climate.ParameterList<>(
-								ImmutableList.of(
-									Pair.of(Climate.parameters(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F), () -> {
-										return biomeRegistry.getOrThrow(Biomes.PLAINS);
-									})
+				(key) -> Optional.of(new Preset(
+					new ResourceLocation("otg"),
+					(biomeRegistry) -> {
+						// Dummy list
+						return new Climate.ParameterList<>(
+							ImmutableList.of(
+								Pair.of(Climate.parameters(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F), biomeRegistry.getHolderOrThrow(Biomes.PLAINS)
 								)
-							);
-						}
-					)).map(DataResult::success).orElseGet(() -> {
-						return DataResult.error("Unknown preset: " + key);
-					});
-				}, 
+							)
+						);
+					}
+				)).map(DataResult::success).orElseGet(() -> {
+					return DataResult.error("Unknown preset: " + key);
+				}),
 				(preset) -> {
 					return DataResult.success(preset.name);
 				}
 			).fieldOf("preset").stable().forGetter(OTGBiomeProvider.PresetInstance::preset),
-			RegistryLookupCodec.create(Registry.BIOME_REGISTRY).forGetter(OTGBiomeProvider.PresetInstance::biomes)).apply(
+			RegistryOps.retrieveRegistry(Registry.BIOME_REGISTRY).forGetter(OTGBiomeProvider.PresetInstance::biomes)).apply(
 				instance, 
 				instance.stable(OTGBiomeProvider.PresetInstance::new)
 			);

@@ -7,7 +7,6 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.ticks.ScheduledTick;
 import org.apache.commons.lang.NotImplementedException;
 
-import com.pg85.otg.constants.Constants;
 import com.pg85.otg.interfaces.IBiome;
 import com.pg85.otg.interfaces.IBiomeConfig;
 import com.pg85.otg.interfaces.IWorldConfig;
@@ -159,7 +158,7 @@ public class MCWorldGenRegion extends PaperWorldGenRegion
 	}
 	
 	@Override
-	public boolean chunkHasDefaultStructure (Random worldRandom, ChunkCoordinate chunkCoordinate)
+	public boolean chunkHasDefaultStructure (ChunkCoordinate chunkCoordinate)
 	{
 		throw new NotImplementedException("This method is not available for non-OTG worlds, you're trying to use an unsupported feature.");
 	}

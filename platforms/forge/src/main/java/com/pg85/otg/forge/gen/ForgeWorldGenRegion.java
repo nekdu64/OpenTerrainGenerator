@@ -6,7 +6,6 @@ import java.util.Random;
 
 import com.google.gson.JsonSyntaxException;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.pg85.otg.constants.Constants;
 import com.pg85.otg.core.OTG;
 import com.pg85.otg.forge.materials.ForgeMaterialData;
 import com.pg85.otg.forge.util.ForgeNBTHelper;
@@ -35,8 +34,6 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.levelgen.Heightmap.Types;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
-import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.block.Blocks;
@@ -863,7 +860,7 @@ public class ForgeWorldGenRegion extends LocalWorldGenRegion
 	}	
 	
 	@Override
-	public boolean chunkHasDefaultStructure(Random worldRandom, ChunkCoordinate chunkCoordinate)
+	public boolean chunkHasDefaultStructure(ChunkCoordinate chunkCoordinate)
 	{
 		Boolean hasDefaultStructure = cachedHasDefaultStructureChunks.get(chunkCoordinate);
 		if(hasDefaultStructure != null)

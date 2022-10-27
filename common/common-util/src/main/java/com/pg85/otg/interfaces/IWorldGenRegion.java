@@ -95,5 +95,5 @@ public interface IWorldGenRegion extends ISurfaceGeneratorNoiseProvider
 
 	LocalMaterialData getMaterialWithoutLoading(int x, int y, int z);
 	int getHighestBlockYAtWithoutLoading(int x, int z, boolean findSolid, boolean findLiquid, boolean ignoreLiquid, boolean ignoreSnow, boolean ignoreLeaves);
-	boolean chunkHasDefaultStructure(Random worldRandom, ChunkCoordinate chunkCoordinate);	
+	boolean chunkHasDefaultStructure(ChunkCoordinate chunkCoordinate);
 }

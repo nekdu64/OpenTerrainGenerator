@@ -19,7 +19,6 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.*;
 
 import com.google.gson.JsonSyntaxException;
-import com.pg85.otg.constants.Constants;
 import com.pg85.otg.core.OTG;
 import com.pg85.otg.interfaces.IBiome;
 import com.pg85.otg.interfaces.IBiomeConfig;
@@ -777,16 +776,14 @@ public class PaperWorldGenRegion extends LocalWorldGenRegion
 	}
 
 	@Override
-	public boolean chunkHasDefaultStructure (Random worldRandom, ChunkCoordinate chunkCoordinate)
+	public boolean chunkHasDefaultStructure (ChunkCoordinate chunkCoordinate)
 	{
 		Boolean hasDefaultStructure = cachedHasDefaultStructureChunks.get(chunkCoordinate);
 		if(hasDefaultStructure != null)
 		{
 			return hasDefaultStructure;
 		}
-		//hasDefaultStructure = this.chunkGenerator.hasFeatureChunkInRange(BuiltinStructureSets.VILLAGES, getSeed(), chunkCoordinate.getChunkX(), chunkCoordinate.getChunkZ(), 4);
 		hasDefaultStructure = this.chunkGenerator.checkForVanillaStructure(chunkCoordinate);
-		//hasDefaultStructure = this.chunkGenerator.checkHasVanillaStructureWithoutLoading(this.worldGenRegion.getMinecraftWorld(), chunkCoordinate);
 		cachedHasDefaultStructureChunks.put(chunkCoordinate, hasDefaultStructure);
 		return hasDefaultStructure;
 	}

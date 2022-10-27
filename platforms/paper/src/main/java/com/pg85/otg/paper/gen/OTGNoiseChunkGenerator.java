@@ -126,7 +126,7 @@ public class OTGNoiseChunkGenerator extends ChunkGenerator
 	// Vanilla has two biome sources, where the first is population and the second is runtime. Don't know the practical difference this makes.
 	private OTGNoiseChunkGenerator (String presetFolderName, BiomeSource populationSource, BiomeSource runtimeSource, Registry<StructureSet> structureSetRegistry, Registry<NormalNoise.NoiseParameters> noiseRegistry, long seed, Holder<NoiseGeneratorSettings> generatorSettings)
 	{
-		super(structureSetRegistry, Optional.of(getEnabledStructures(presetFolderName)), populationSource, runtimeSource, seed);
+		super(structureSetRegistry, Optional.empty(), populationSource, runtimeSource, seed);
 		if (!(populationSource instanceof ILayerSource)) {
 			throw new RuntimeException("OTG has detected an incompatible biome provider- try using otg:otg as the biome source name");
 		}
